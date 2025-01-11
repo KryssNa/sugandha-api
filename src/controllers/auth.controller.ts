@@ -1,4 +1,5 @@
 // src/controllers/auth.controller.ts
+import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { UserModel } from '../models/user.model';
 import { TwoFactorService } from '../services/2fa.service';
@@ -7,7 +8,6 @@ import { ApiResponse } from '../utils/apiResponse';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
-import crypto from 'crypto';
 // import { EmailService } from '../services/email.service';
 
 export class AuthController {
@@ -39,6 +39,18 @@ export class AuthController {
         });
     });
 
+    // getTwoFactorDetails
+    static getTwoFactorDetails = asyncHandler(async (req: Request, res: Response) => {
+        const user = await UserService.findById(req.user!._id);
+        ApiResponse.success(res, {
+            message: 'Two Factor Details',
+            data: {
+                twoFactorEnabled: user.twoFactorEnabled,
+                twoFactorMethod: user.twoFactorMethod
+            }
+        });
+    })
+
     // Two-Factor Authentication
     static setupTwoFactor = asyncHandler(async (req: Request, res: Response) => {
         const user = await UserService.findById(req.user!._id);
@@ -68,6 +80,7 @@ export class AuthController {
     static enableTwoFactor = asyncHandler(async (req: Request, res: Response) => {
         const user = await UserService.findById(req.user!._id);
         const { token } = req.body;
+        console.log("token", token)
 
         // Verify token
         if (!user.twoFactorSecret) {
@@ -107,12 +120,12 @@ export class AuthController {
         });
     });
 
-    // Login with 2FA
+ // Login with 2FA
     static loginWithTwoFactor = asyncHandler(async (req: Request, res: Response) => {
         const { email, password, twoFactorToken } = req.body;
 
         const user = await UserService.findOne({ email }, { selectPassword: true });
-
+        console.log("user", user)
         // Validate password
         if (!user || !(await user.comparePassword(password))) {
             throw AppError.Unauthorized('Invalid credentials');
@@ -120,9 +133,13 @@ export class AuthController {
 
         // Check if 2FA is enabled
         if (user.twoFactorEnabled) {
-            // Verify 2FA token
-            const isValid = user.twoFactorSecret ? TwoFactorService.verifyToken(user.twoFactorSecret, twoFactorToken) : false;
+            if (!twoFactorToken) {
+                throw AppError.Unauthorized('2FA token is required');
+            }
 
+            const isValid = user.twoFactorSecret ? TwoFactorService.verifyToken(user.twoFactorSecret, twoFactorToken) : false;
+            console.log("isvlaid",isValid)
+            console.log("isvlaid1",twoFactorToken)
             if (!isValid) {
                 throw AppError.Unauthorized('Invalid 2FA token');
             }
@@ -144,59 +161,62 @@ export class AuthController {
                     lastName: user.lastName,
                     role: user.role
                 },
+                csrfToken: req.csrfToken(),
                 tokens: { accessToken, refreshToken }
             }
         });
     });
 
-    // In auth.controller.ts
-static initiateEmailVerification = asyncHandler(async (req: Request, res: Response) => {
-    const user = await UserService.findById(req.user!._id);
     
-    await UserService.sendVerificationEmail(user);
-  
-    ApiResponse.success(res, {
-      message: 'Verification email sent',
-      data: { tokenExpires: user.emailVerificationTokenExpires }
+
+    // In auth.controller.ts
+    static initiateEmailVerification = asyncHandler(async (req: Request, res: Response) => {
+        const user = await UserService.findById(req.user!._id);
+
+        await UserService.sendVerificationEmail(user);
+
+        ApiResponse.success(res, {
+            message: 'Verification email sent',
+            data: { tokenExpires: user.emailVerificationTokenExpires }
+        });
     });
-  });
-  
-  static forgotPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const user = await UserService.findByEmail(email);
-  
-    if (!user) {
-      throw AppError.NotFound('User not found');
-    }
-  
-    await UserService.sendPasswordResetEmail(user);
-  
-    ApiResponse.success(res, {
-      message: 'Password reset email sent'
+
+    static forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+        const { email } = req.body;
+        const user = await UserService.findByEmail(email);
+
+        if (!user) {
+            throw AppError.NotFound('User not found');
+        }
+
+        await UserService.sendPasswordResetEmail(user);
+
+        ApiResponse.success(res, {
+            message: 'Password reset email sent'
+        });
     });
-  });
-  static verifyResetToken = asyncHandler(async (req: Request, res: Response) => {
-    const { token } = req.body;
-  
-    // Verify token
-    const user = await UserService.verifyPasswordResetToken(token);
-  
-    ApiResponse.success(res, {
-      message: 'Reset token is valid',
-      data: { 
-        tokenValid: true,
-        email: user.email 
-      }
+    static verifyResetToken = asyncHandler(async (req: Request, res: Response) => {
+        const { token } = req.body;
+
+        // Verify token
+        const user = await UserService.verifyPasswordResetToken(token);
+
+        ApiResponse.success(res, {
+            message: 'Reset token is valid',
+            data: {
+                tokenValid: true,
+                email: user.email
+            }
+        });
     });
-  });
-  // In auth.controller.ts
-static resetPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { token, newPassword } = req.body;
-  
-    await UserService.resetPassword(token, newPassword);
-  
-    ApiResponse.success(res, {
-      message: 'Password reset successfully'
+    // In auth.controller.ts
+    static resetPassword = asyncHandler(async (req: Request, res: Response) => {
+        const { token, newPassword } = req.body;
+
+        await UserService.resetPassword(token, newPassword);
+
+        ApiResponse.success(res, {
+            message: 'Password reset successfully'
+        });
     });
-  });
 }
