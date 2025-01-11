@@ -135,8 +135,6 @@ ProductSchema.index({ isHot: 1, isFeatured: 1, isNewArrival: 1 });
 // Virtuals
 ProductSchema.virtual('discountPercentage').get(function () {
   // console.log(this.originalPrice, this.basePrice);
-  console.log(this.originalPrice, this.basePrice);
-  console.log(((this.originalPrice - this.basePrice) / this.originalPrice) * 100);
   return Math.round(((this.originalPrice - this.basePrice) / this.originalPrice) * 100);
 });
 
