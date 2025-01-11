@@ -33,11 +33,11 @@
 //   process.exit(1);
 // });
 
-import { connectDB } from "./config/database";
-import { logger } from "./utils/logger";
 import * as fs from 'fs';
 import * as https from 'https';
 import * as path from 'path';
+import { connectDB } from "./config/database";
+import { logger } from "./utils/logger";
 
 const express = require("express");
 const app = require("./app");
@@ -50,8 +50,8 @@ const PORT = process.env.PORT || 443;
 
 // SSL certificate configuration
 const options = {
-  key: fs.readFileSync(path.join(__dirname, '../server.key')),
-  cert: fs.readFileSync(path.join(__dirname, '../server.crt')),
+  key: fs.readFileSync(path.join(__dirname, '../certificates/localhost-key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, '../certificates/localhost.pem')),
   requestCert: false,
   rejectUnauthorized: false
 };
