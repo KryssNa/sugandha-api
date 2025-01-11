@@ -2,6 +2,7 @@ export interface UserDevice {
   deviceId: string;
   deviceType: string;
   browser: string;
+  os?: string;
   operatingSystem: string;
   ipAddress: string;
   location?: {
@@ -47,6 +48,7 @@ export interface IUser {
   activeDevices: UserDevice[];
   maxDevices?: number;
   lockUntil?: Date;
+  isLocked?: boolean;
 
   isEmailVerified: boolean;
   emailVerificationToken?: string;
