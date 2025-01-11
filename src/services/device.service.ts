@@ -28,7 +28,8 @@ export class DeviceService {
     static async trackDeviceLogin(
         user: UserDocument,
         userAgent: string,
-        ipAddress: string
+        ipAddress: string,
+        os?:string,
     ) {
         const deviceInfo = this.parseUserAgent(userAgent);
         const location = this.getLocationFromIP(ipAddress);
@@ -40,7 +41,7 @@ export class DeviceService {
         });
 
         // Check device limit
-        if (user.activeDevices.length >= (user.maxDevices || 3)) {
+        if (user.activeDevices.length >= (user.maxDevices || 10)) {
             user.activeDevices.shift(); // Remove oldest device
         }
 
@@ -51,6 +52,7 @@ export class DeviceService {
             ipAddress,
             location,
             lastActive: new Date(),
+            os,
             isCurrentDevice: true
         });
 
@@ -68,4 +70,8 @@ export class DeviceService {
         );
         await user.save();
     }
+    static async terminateAllSessions(user:UserDocument) {
+        user.activeDevices = []; // Clear all sessions
+        await user.save();
+      }
 }
