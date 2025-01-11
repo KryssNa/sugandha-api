@@ -101,10 +101,10 @@
 // };
 
 import { NextFunction, Request, Response } from "express";
-import { MongoError } from "mongodb";
 import { ZodError } from "zod";
 import { AppError } from "../utils/AppError";
 import { logger } from "../utils/logger";
+import { IPBlockService } from "./rate_limiter";
 
 export const errorHandler = (
   err: Error,
@@ -125,11 +125,18 @@ export const errorHandler = (
     method: req.method,
     timestamp: new Date().toISOString(),
   });
+  const ip = req.ip ?? '';
+
+  // Log security events
+  if (err instanceof AppError && err.statusCode === 401) {
+    IPBlockService.recordAttempt(ip, req.path);
+  }
+
 
   // Check if it's a Mongoose error
   if (err.name === 'MongoError' || err.name === 'MongoServerError') {
     const mongoError = err as any;
-    
+
     // Duplicate key error
     if (mongoError.code === 11000) {
       const field = Object.keys(mongoError.keyPattern || {})[0] || 'unknown';
@@ -150,6 +157,22 @@ export const errorHandler = (
       });
       return;
     }
+  }
+  if ((err as any).code === "EBADCSRFTOKEN") {
+
+    res.status(403).json({
+      success: false,
+      status: "fail",
+      message: "Invalid CSRF token",
+      errors: [
+        {
+          message: "CSRF token validation failed",
+          code: 'INVALID_CSRF_TOKEN'
+        }
+      ],
+      timestamp: new Date().toISOString(),
+    });
+    return;
   }
 
   // Existing error handlers remain the same
