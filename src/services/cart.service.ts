@@ -95,12 +95,10 @@ export class CartService {
       if (cart.items.length >= this.MAX_ITEMS_PER_CART) {
         throw AppError.BadRequest('Cart has reached maximum items limit');
       }
-      console.log("product", productId);
 
 
       // Get product price
       const product = await Product.findById({ _id: productId });
-      console.log("product", product);
       if (!product) {
         throw AppError.NotFound('Product not found');
       }
@@ -265,8 +263,6 @@ export class CartService {
     productId: string
   ): Promise<CartDocument> {
     const cart = await this.getCart(userId);
-    console.log("cart", cart.items[0].product);
-    console.log("productId", productId);
 
     cart.items = cart.items.filter(
       item => item.product._id.toString() !== productId
