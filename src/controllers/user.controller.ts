@@ -36,6 +36,7 @@ export class UserController {
 
     const user = await UserService.findOne({ email }, { selectPassword: true });
     if (!user || !(await user.comparePassword(password))) {
+      console.log('Invalid credentials');
       throw AppError.Unauthorized('Invalid credentials');
     }
 

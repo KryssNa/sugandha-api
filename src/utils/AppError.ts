@@ -1,4 +1,5 @@
 // src/utils/AppError.ts
+import e from 'express';
 import { ZodError } from 'zod';
 
 export type ApiStatus = 'error' | 'fail' | 'success';
@@ -49,16 +50,39 @@ export class AppError extends Error {
       }
     }
 
+    // // Handle Zod validation errors
+    // if (error instanceof ZodError) {
+    //   const errors = error.errors.map(err => ({
+    //     field: err.path.join('.'),
+    //     message: err.message,
+    //     code: err.code,
+    //     path: err.path
+    //   }));
+    //   return new AppError(400, 'Validation failed', errors, 'fail');
+    // }
     // Handle Zod validation errors
     if (error instanceof ZodError) {
-      const errors = error.errors.map(err => ({
-        field: err.path.join('.'),
-        message: err.message,
-        code: err.code,
-        path: err.path
-      }));
-      return new AppError(400, 'Validation failed', errors, 'fail');
+      const errors = error.errors.map(err => {
+        const fieldName = String(err.path.slice(-1)[0]); // Extract the last part of the path (field name) and convert to string
+        return {
+          field: fieldName,
+          message: `${fieldName} is required`, // Customize message format
+          code: err.code || 'INVALID_INPUT',
+        };
+      });
+
+      const formattedMessage = errors
+        .map(e => `${e.field}`)
+        .join('; ');
+
+      return new AppError(
+        400,
+        `Validation failed on field(s): ${formattedMessage}`,
+        errors,
+        'fail'
+      );
     }
+
 
     // Handle mongoose validation errors
     if (error.name === 'ValidationError') {
@@ -116,11 +140,9 @@ export class AppError extends Error {
 
     // Generic error handling
     return new AppError(
-      500,
-      'Internal server error',
-      [{ message: 'Something went wrong' }],
-      'error',
-      false
+      error.statusCode || 500,
+      error.message || 'Something went wrong',
+      error.errors,
     );
   }
 
@@ -147,5 +169,9 @@ export class AppError extends Error {
 
   static DatabaseError(message: string, errors?: ApiErrorDetail[]): AppError {
     return new AppError(500, message, errors, 'error', false);
+  }
+
+  static Conflict(message: string, errors?: ApiErrorDetail[]): AppError {
+    return new AppError(409, message, errors, 'fail');
   }
 }

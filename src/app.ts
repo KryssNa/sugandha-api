@@ -6,8 +6,10 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { errorHandler } from "./middlewares/error";
 import perfumeRoutes from "./routes/ai-recommendation.routes";
-import authRoutes from "./routes/user.routes";
+import categoryRoutes from "./routes/category.routes";
 import productRoutes from "./routes/product.routes";
+import authRoutes from "./routes/user.routes";
+import variantsRoutes from "./routes/variant.routes";
 
 const app = express();
 
@@ -38,6 +40,9 @@ app.use("/api/v1/perfume", perfumeRoutes);
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/variants", variantsRoutes);
+
 
 
 // Error handling

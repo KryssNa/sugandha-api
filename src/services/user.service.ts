@@ -28,7 +28,7 @@ export class UserService {
 
     const existingUser = await UserModel.findOne({ email: userData.email });
     if (existingUser) {
-      throw AppError.BadRequest('Email already exists', [
+      throw AppError.Conflict('Email already exists', [
         { field: 'email', message: 'This email is already registered' }
       ]);
     }

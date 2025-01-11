@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const imageSchema = z.object({
   id: z.string().optional(),
-  url: z.string().url('Invalid image URL'),
+  url: z.string({required_error:'Invalid image URL'}),
   alt: z.string().optional(),
   isPrimary: z.boolean().default(false)
 });
@@ -56,9 +56,9 @@ export const createProductSchema = z.object({
     shortDescription: z.string().optional(),
 
     images: z.array(imageSchema).min(1, 'At least one image is required'),
-    thumbnail: z.string().url('Invalid thumbnail URL'),
-    coverImage: z.string().url('Invalid cover image URL'),
-    video: z.string().url('Invalid video URL').optional(),
+    thumbnail: z.string({required_error:'Invalid thumbnail URL'}),
+    coverImage: z.string({required_error:'Invalid cover image URL'}),
+    video: z.string().optional(),
 
     variants: z.array(variantSchema).min(1, 'At least one variant is required'),
     basePrice: z.number().min(0),
