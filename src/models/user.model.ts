@@ -14,6 +14,7 @@ interface IUserMethods {
   }>;
   createPasswordResetToken(): string;
   generateEmailVerificationToken(): string;
+  isAccountLocked(): boolean;
 
 }
 
@@ -69,7 +70,6 @@ const userSchema = new mongoose.Schema<UserDocument>({
     type: Boolean,
     default: false
   },
-
   refreshToken: {
     type: String,
     select: false,
@@ -95,6 +95,10 @@ const userSchema = new mongoose.Schema<UserDocument>({
   },
   lastLoginAttempt: Date,
   lockUntil: Date,
+  isLocked: {
+    type: Boolean,
+    default: false,
+  },
 
   activeDevices: [{
     deviceId: { type: String, required: true },
@@ -102,6 +106,7 @@ const userSchema = new mongoose.Schema<UserDocument>({
     browser: String,
     operatingSystem: String,
     ipAddress: String,
+    os: String,
     location: {
       city: String,
       country: String,
@@ -190,6 +195,10 @@ userSchema.methods.generateEmailVerificationToken = function(): string {
     .digest('hex');
   this.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   return token;
+};
+
+userSchema.methods.isAccountLocked = function(): boolean {
+  return this.lockUntil && this.lockUntil > new Date();
 };
 
 
