@@ -174,4 +174,7 @@ export class AppError extends Error {
   static Conflict(message: string, errors?: ApiErrorDetail[]): AppError {
     return new AppError(409, message, errors, 'fail');
   }
+  static InternalServerError(message: string, errors?: ApiErrorDetail[]): AppError {
+    return new AppError(500, message, errors, 'error');
+  }
 }
