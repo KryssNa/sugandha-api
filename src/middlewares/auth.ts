@@ -1,10 +1,12 @@
 // src/middleware/auth.middleware.ts
 import { NextFunction, Request, Response } from "express";
 import { UserDocument } from "../models/user.model";
+import { TwoFactorService } from "../services/2fa.service";
 import { UserService } from "../services/user.service";
 import { AppError } from "../utils/AppError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { verifyAccessToken } from "../utils/jwt";
+import { IPBlockService } from "./rate_limiter";
 
 declare global {
   namespace Express {
@@ -102,4 +104,53 @@ export const authenticate = asyncHandler(async (
       { message: "Invalid or expired token" }
     ]);
   }
+});
+
+export const secureAuthentication = asyncHandler(async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const ip = req.ip || '';
+  const { email } = req.body;
+
+  // Check if IP is blocked
+  if (IPBlockService.isBlocked(ip)) {
+    return res.status(403).json({
+      message: 'Access temporarily blocked due to multiple failed attempts'
+    });
+  }
+
+  try {
+    const user = await UserService.authenticateUser(email, req.body.password);
+
+    // Clear any previous block attempts
+    IPBlockService.clearAttempts(ip);
+
+    next();
+  } catch (error) {
+    // Record failed authentication attempt
+    IPBlockService.recordAttempt(ip, req.path);
+
+    throw error;
+  }
+});
+
+export const enforce2FA = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const user = req.user;
+
+  if (user?.twoFactorEnabled) {
+    const { twoFactorToken } = req.body;
+
+    if (!twoFactorToken) {
+      throw AppError.BadRequest('2FA token is required');
+    }
+
+    const isValid = user.twoFactorSecret ? TwoFactorService.verifyToken(user.twoFactorSecret, twoFactorToken) : false;
+    if (!isValid) {
+      throw AppError.Unauthorized('Invalid 2FA token');
+    }
+  }
+
+  next();
 });
