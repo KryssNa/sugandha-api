@@ -4,15 +4,13 @@ import { UserService } from '../services/user.service';
 import { ApiResponse } from '../utils/apiResponse';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
-import { generateAccessToken, generateRefreshToken, verifyAccessToken } from '../utils/jwt';
+import { generateTokensAndSetCookies, verifyAccessToken, verifyRefreshToken } from '../utils/jwt';
+import { TwoFactorService } from '../services/2fa.service';
 
 export class UserController {
   static register = asyncHandler(async (req: Request, res: Response) => {
     const user = await UserService.create(req.body);
-    const [accessToken, refreshToken] = await Promise.all([
-      generateAccessToken(user._id),
-      generateRefreshToken(user._id)
-    ]);
+    const { accessToken, refreshToken } = await generateTokensAndSetCookies({ res, userId: user._id });
 
     await UserService.update(user._id, { refreshToken });
 
@@ -27,63 +25,43 @@ export class UserController {
           lastName: user.lastName,
           role: user.role
         },
+        csrfToken: req.csrfToken(),
+
         tokens: { accessToken, refreshToken }
       }
     });
   });
-
-  // static login = asyncHandler(async (req: Request, res: Response) => {
-  //   const { email, password } = req.body;
-
-  //   const user = await UserService.findOne({ email }, { selectPassword: true });
-  //   if (!user || !(await user.comparePassword(password))) {
-  //     throw AppError.Unauthorized('Invalid credentials');
-  //   }
-
-  //   const [accessToken, refreshToken] = await Promise.all([
-  //     generateAccessToken(user._id),
-  //     generateRefreshToken(user._id)
-  //   ]);
-
-  //   await UserService.update(user._id, { refreshToken });
-
-  //   ApiResponse.success(res, {
-  //     message: 'Login successful',
-  //     data: {
-  //       user: {
-  //         id: user._id,
-  //         email: user.email,
-  //         firstName: user.firstName,
-  //         lastName: user.lastName,
-
-  //         role: user.role
-  //       },
-  //       tokens: { accessToken, refreshToken }
-  //     }
-  //   });
-  // });
-
   // src/controllers/user.controller.ts
   static login = asyncHandler(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    const { email, password, twoFactorToken } = req.body;
     const userAgent = req.get('User-Agent') || '';
     const ipAddress = req.ip || '';
+    const os = "";
 
-    const user = await UserService.findOne({ email }, { selectPassword: true });
-    if (!user || !(await user.comparePassword(password))) {
-      throw AppError.Unauthorized('Invalid credentials');
+    const user = await UserService.authenticateUser(email, password);
+
+    if (user.twoFactorEnabled) {
+      if (!twoFactorToken) {
+        throw AppError.Unauthorized('2FA token is required');
+      }
+
+      const isValid = user.twoFactorSecret ? TwoFactorService.verifyToken(user.twoFactorSecret, twoFactorToken) : false;
+      console.log("isvlaid", isValid)
+      console.log("isvlaid1", twoFactorToken)
+      if (!isValid) {
+        throw AppError.Unauthorized('Invalid 2FA token');
+      }
     }
 
-    const [accessToken, refreshToken] = await Promise.all([
-      generateAccessToken(user._id),
-      generateRefreshToken(user._id)
-    ]);
+
+    const { accessToken, refreshToken } = await generateTokensAndSetCookies({ res, userId: user._id });
 
     // Track device login
     const deviceId = await DeviceService.trackDeviceLogin(
       user,
       userAgent,
-      ipAddress
+      ipAddress,
+      os
     );
 
     await UserService.update(user._id, { refreshToken });
@@ -102,22 +80,49 @@ export class UserController {
           accessToken,
           refreshToken
         },
+        csrfToken: req.csrfToken(),
         deviceId
       }
+    });
+  });
+
+  static unlockAccount = asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+    await UserService.unlockAccount(email);
+
+    ApiResponse.success(res, {
+      message: 'Account unlocked successfully'
     });
   });
 
   static logout = asyncHandler(async (req: Request, res: Response) => {
     const { deviceId } = req.body;
 
+    // Invalidate device if `deviceId` is provided
     if (deviceId && req.user) {
       await DeviceService.invalidateDevice(req.user, deviceId);
     }
 
+    // Clear refresh token from the database
     await UserService.update(req.user!._id, { refreshToken: '' });
 
+    // Clear cookies
+    res.clearCookie('accessToken', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.clearCookie('refreshToken', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.clearCookie('user', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+
+    // Send response
     ApiResponse.success(res, {
-      message: 'Logout successful'
+      message: 'Logout successful',
+    });
+  });
+
+  static terminateAllSessions = asyncHandler(async (req: Request, res: Response) => {
+    const user = await UserService.findById(req.user!._id);
+    await DeviceService.terminateAllSessions(user);
+
+    ApiResponse.success(res, {
+      message: 'All sessions terminated successfully'
     });
   });
 
@@ -154,6 +159,9 @@ export class UserController {
         country: user.country,
         postalCode: user.postalCode,
         avatar: user.avatar,
+        emailVerified: user.isEmailVerified,
+        twoFactorEnabled: user.twoFactorEnabled,
+        sessions: user.activeDevices,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       },
@@ -263,6 +271,27 @@ export class UserController {
     });
   }
   )
+  static refreshToken = asyncHandler(async (req: Request, res: Response) => {
+    const { refreshToken } = req.cookies;
 
+    if (!refreshToken) {
+      throw AppError.Unauthorized('Refresh token is required');
+    }
+
+    const payload = await verifyRefreshToken(refreshToken);
+
+    // Generate new tokens and set them in cookies
+    const { accessToken, refreshToken: newRefreshToken } = await generateTokensAndSetCookies({ res, userId: payload.userId });
+
+    ApiResponse.success(res, {
+      message: 'Token refreshed successfully',
+      data: {
+        tokens: {
+          accessToken, // Optional for client-side usage
+          refreshToken: newRefreshToken, // Optional for client-side usage
+        },
+      },
+    });
+  });
 
 }
