@@ -60,8 +60,6 @@ export class OrderService {
   }
 
   static async getOrderDetails(orderId: string, userId?: string) {
-    console.log('userId', userId);
-    console.log('orderId', orderId);
     const order = await OrderModel.findById(orderId).populate('items.product');
     // const order = await OrderModel.findOne({
     //   _id: new ObjectId(orderId),
