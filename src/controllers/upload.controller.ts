@@ -9,7 +9,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 export class UploadController {
     // Get full URL for uploaded file
     private static getFileUrl(filePath: string) {
-        const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+        const baseUrl = process.env.BASE_URL || 'https://localhost:5000';
         return `${baseUrl}/${filePath.replace(/\\/g, '/')}`;
     }
 
