@@ -50,6 +50,60 @@ export class UserService {
     }
   }
 
+  static async authenticateUser(email: string, password: string) {
+    const user = await this.findOne({ email }, { selectPassword: true });
+
+    if (!user) {
+      throw AppError.Unauthorized('Invalid credentials');
+    }
+
+    // Check if account is locked
+    if (user.isAccountLocked()) {
+      const remainingLockTime = Math.ceil(
+        ((user.lockUntil?.getTime() || 0) - Date.now()) / (1000 * 60)
+      );
+      throw AppError.Forbidden(`Account locked. Try again in ${remainingLockTime} minutes`);
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+      // Increment login attempts
+      user.loginAttempts = (user.loginAttempts || 0) + 1;
+
+      // Lock account after 5 failed attempts
+      if (user.loginAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 1 * 60 * 1000); // 30 minutes lock
+        user.isLocked = true;
+      }
+
+      await user.save();
+      throw AppError.Unauthorized('Invalid credentials');
+    }
+
+    // Reset login attempts on successful login
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    user.isLocked = false;
+    await user.save();
+
+    return user;
+  }
+
+  static async unlockAccount(email: string): Promise<void> {
+    const user = await this.findByEmail(email);
+    
+    if (!user) {
+      throw AppError.NotFound('User not found');
+    }
+  
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    user.isLocked = false;
+    await user.save();
+  }
+
   static async findById(
     id: string,
     options: { selectPassword?: boolean; select?: string } = {}
@@ -327,6 +381,8 @@ export class UserService {
 
     return user;
   }
+
+  
 
   static async getUserProfile(id: string): Promise<UserDocument> {
     const user = await this.findById(id, { select: '-password -refreshToken' });
