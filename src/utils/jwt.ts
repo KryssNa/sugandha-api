@@ -1,7 +1,7 @@
 // src/utils/jwt.ts
+import { config } from 'dotenv';
 import { SignJWT, jwtVerify } from 'jose';
 import { AppError } from './AppError';
-import { config } from 'dotenv';
 
 // Load environment variables
 config({
@@ -52,6 +52,44 @@ export const generateAccessToken = async (userId: string): Promise<string> => {
   }
 };
 
+import { setCookie } from 'nookies';
+
+interface GenerateTokensAndSetCookiesParams {
+  res: any;
+  userId: string;
+}
+
+interface Tokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export const generateTokensAndSetCookies = async ({ res, userId }: {
+  res: any;
+  userId: string;
+}): Promise<Tokens> => {
+  const accessToken = await generateAccessToken(userId);
+  const refreshToken = await generateRefreshToken(userId);
+
+  setCookie({ res }, 'accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict',
+    maxAge: 60 * 15, // 15 minutes
+    path: '/',
+  });
+
+  setCookie({ res }, 'refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    path: '/',
+  });
+
+  return { accessToken, refreshToken };
+};
+
 export interface JWTPayload {
   userId: string;
   iat?: number;
@@ -87,6 +125,36 @@ export const verifyAccessToken = async (token: string): Promise<JWTPayload> => {
     throw new AppError(401, 'Invalid token');
   }
 };
+
+export const  verifyRefreshToken = async (token: string): Promise<JWTPayload> => {
+  try {
+    const { payload } = await jwtVerify(token, secretKey, {
+      algorithms: ['HS256']
+    });
+
+    if (!payload.userId) {
+      throw new AppError(401, 'Invalid token format');
+    }
+
+    return payload as unknown as JWTPayload;
+  } catch (error: any) {
+    console.error('Token verification error:', error);
+
+    if (error.code === 'ERR_JWT_EXPIRED') {
+      throw new AppError(401, 'Token has expired');
+    }
+
+    if (error.code === 'ERR_JWS_INVALID') {
+      throw new AppError(401, 'Invalid token signature');
+    }
+
+    if (error.code === 'ERR_JWT_CLAIM_VALIDATION_FAILED') {
+      throw new AppError(401, 'Token validation failed');
+    }
+
+    throw new AppError(401, 'Invalid token');
+  }
+}
 
 export const generateRefreshToken = async (userId: string): Promise<string> => {
   try {
