@@ -1,8 +1,8 @@
 // services/category.service.ts
 import { FilterQuery, Types, UpdateQuery } from 'mongoose';
-import { AppError } from '../utils/AppError';
 import slugify from 'slugify';
-import { CategoryDocument, CategoryModel } from '../models/category.modal';
+import { CategoryDocument, CategoryModel } from '../models/category.model';
+import { AppError } from '../utils/AppError';
 
 interface FindAllOptions {
   filter?: FilterQuery<CategoryDocument>;
@@ -193,7 +193,7 @@ export class CategoryService {
     }
 
     await category.deleteOne();
-    
+
     // Update parent's isLeaf status if needed
     if (category.parentId) {
       const siblingsExist = await CategoryModel.exists({ parentId: category.parentId });
@@ -212,8 +212,8 @@ export class CategoryService {
     orderedIds: string[]
   ): Promise<void> {
     await Promise.all(
-      orderedIds.map((id, index) => 
-        CategoryModel.findByIdAndUpdate(id, { 
+      orderedIds.map((id, index) =>
+        CategoryModel.findByIdAndUpdate(id, {
           order: index,
           parentId: parentId
         })

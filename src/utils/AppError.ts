@@ -1,5 +1,4 @@
 // src/utils/AppError.ts
-import e from 'express';
 import { ZodError } from 'zod';
 
 export type ApiStatus = 'error' | 'fail' | 'success';
@@ -61,24 +60,54 @@ export class AppError extends Error {
     //   return new AppError(400, 'Validation failed', errors, 'fail');
     // }
     // Handle Zod validation errors
+    // if (error instanceof ZodError) {
+    //   const errors = error.errors.map(err => {
+    //     const fieldName = String(err.path.slice(-1)[0]); // Extract the last part of the path (field name) and convert to string
+    //     return {
+    //       field: fieldName,
+    //       message: `${fieldName} is required`, // Customize message format
+    //       code: err.code || 'INVALID_INPUT',
+    //     };
+    //   });
+
+    //   const formattedMessage = errors
+    //     .map(e => `${e.field}`)
+    //     .join('; ');
+
+    //   return new AppError(
+    //     400,
+    //     `Validation failed on field(s): ${formattedMessage}`,
+    //     errors,
+    //     'fail'
+    //   );
+    // }
+    // Handle Zod validation errors
     if (error instanceof ZodError) {
       const errors = error.errors.map(err => {
-        const fieldName = String(err.path.slice(-1)[0]); // Extract the last part of the path (field name) and convert to string
+        // Get the full path excluding 'body' if it exists
+        const pathWithoutBody = err.path.filter(p => p !== 'body');
+        const fieldName = pathWithoutBody.join('.');
+
         return {
-          field: fieldName,
-          message: `${fieldName} is required`, // Customize message format
+          field: fieldName || String(err.path.slice(-1)[0]),
+          message: err.message,
           code: err.code || 'INVALID_INPUT',
         };
       });
 
-      const formattedMessage = errors
-        .map(e => `${e.field}`)
-        .join('; ');
+      // Filter out duplicate field errors
+      const uniqueErrors = errors.filter((error, index, self) =>
+        index === self.findIndex((e) => e.field === error.field)
+      );
+
+      const formattedMessage = uniqueErrors
+        .map(e => e.field)
+        .join(', ');
 
       return new AppError(
         400,
         `Validation failed on field(s): ${formattedMessage}`,
-        errors,
+        uniqueErrors,
         'fail'
       );
     }
@@ -176,5 +205,8 @@ export class AppError extends Error {
   }
   static InternalServerError(message: string, errors?: ApiErrorDetail[]): AppError {
     return new AppError(500, message, errors, 'error');
+  }
+  static PaymentFailed(message: string, errors?: ApiErrorDetail[]): AppError {
+    return new AppError(402, message, errors, 'fail');
   }
 }

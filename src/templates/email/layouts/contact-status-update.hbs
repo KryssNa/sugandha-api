@@ -1,0 +1,27 @@
+
+{{!-- templates/email/contact-status-update.hbs --}}
+{{#> layouts/main}}
+    <h2>Update on Your Request</h2>
+    
+    <p>Hello {{name}},</p>
+    
+    <p>There has been an update to your request (Reference: {{reference}}).</p>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p><strong>Status:</strong> {{uppercase status}}</p>
+        {{#if statusMessage}}
+        <p><strong>Message:</strong> {{statusMessage}}</p>
+        {{/if}}
+    </div>
+    
+    {{#if nextSteps}}
+    <h3>Next Steps:</h3>
+    <ul>
+        {{#each nextSteps}}
+        <li>{{this}}</li>
+        {{/each}}
+    </ul>
+    {{/if}}
+    
+    <p>If you have any questions, please don't hesitate to contact us.</p>
+{{/layouts/main}}

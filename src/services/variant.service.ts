@@ -1,6 +1,6 @@
 // services/variant.service.ts
 import mongoose from 'mongoose';
-import { VariantDocument, VariantModel } from '../models/variant.modal';
+import { VariantDocument, VariantModel } from '../models/variant.model';
 import { AppError } from '../utils/AppError';
 
 export class VariantService {

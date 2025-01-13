@@ -1,10 +1,10 @@
 // controllers/category.controller.ts
 import { Request, Response } from 'express';
+import { CategoryModel } from '../models/category.model';
 import { CategoryService } from '../services/category.service';
 import { ApiResponse } from '../utils/apiResponse';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
-import { CategoryModel } from '../models/category.modal';
 
 export class CategoryController {
     static createCategory = asyncHandler(async (req: Request, res: Response) => {

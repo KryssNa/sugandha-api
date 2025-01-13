@@ -1,0 +1,24 @@
+{{!-- templates/email/contact-notification.hbs --}}
+{{#> layouts/main}}
+    <h2>New Contact Request</h2>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p><strong>Contact Type:</strong> {{uppercase contactType}}</p>
+        <p><strong>Customer Name:</strong> {{customerName}}</p>
+        <p><strong>Customer Email:</strong> {{customerEmail}}</p>
+    </div>
+    
+    <h3>Message:</h3>
+    <div style="background-color: #fff; padding: 15px; border: 1px solid #eee; border-radius: 5px;">
+        {{message}}
+    </div>
+    
+    {{#if productDetails}}
+    <h3>Product Details:</h3>
+    <div style="background-color: #fff; padding: 15px; border: 1px solid #eee; border-radius: 5px;">
+        {{productDetails}}
+    </div>
+    {{/if}}
+    
+    <a href="{{dashboardUrl}}" class="button">View in Dashboard</a>
+{{/layouts/main}}

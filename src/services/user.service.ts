@@ -72,6 +72,39 @@ export class UserService {
     return user;
   }
 
+  static async findByEmail(email: string): Promise<UserDocument | null> {
+    return UserModel.findOne({ email }).exec();
+  }
+
+  // create guest user
+  static async createGuestUser(userData: Partial<UserDocument>): Promise<UserDocument> {
+    if (!userData.email) {
+      throw AppError.ValidationError([
+        { field: 'email', message: 'Email is required' }
+      ]);
+    }
+
+    const existingUser = await UserModel.findOne({ email: userData.email });
+    if (existingUser) {
+      throw AppError.Conflict('Email already exists', [
+        { field: 'email', message: 'This email is already registered' }
+      ]);
+    }
+
+    try {
+      return await UserModel.create(userData);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ValidationError') {
+        const errors = Object.values((error as any).errors).map((err: any) => ({
+          field: err.path,
+          message: err.message
+        }));
+        throw AppError.ValidationError(errors);
+      }
+      throw AppError.DatabaseError('Error creating user');
+    }
+  }
+
   static async findOne(
     filter: FilterQuery<UserDocument>,
     options: { selectPassword?: boolean; select?: string } = {}

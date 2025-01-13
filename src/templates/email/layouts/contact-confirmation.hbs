@@ -1,0 +1,21 @@
+{{!-- templates/email/contact-confirmation.hbs --}}
+{{#> layouts/main}}
+    <h2>Thank you for contacting us, {{name}}!</h2>
+    
+    <p>We have received your {{type}} request and our team will review it shortly.</p>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p><strong>Reference Number:</strong> {{reference}}</p>
+        <p><strong>Request Type:</strong> {{uppercase type}}</p>
+        <p><strong>Submitted On:</strong> {{formatDate submitDate}}</p>
+    </div>
+    
+    <p>What happens next?</p>
+    <ul>
+        <li>Our team will review your request</li>
+        <li>You will receive a response within 24-48 hours</li>
+        <li>For urgent matters, please call us at +977 9811787904</li>
+    </ul>
+    
+    <p>If you need to follow up on your request, please keep your reference number handy.</p>
+{{/layouts/main}}

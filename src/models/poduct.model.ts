@@ -40,7 +40,7 @@ const ProductSchema = new Schema<IProduct>({
   inStock: { type: Boolean, default: true },
 
   // Categories & Organization
-  category: [{ type: String, required: true }],
+  category: [{ id: { type: Schema.Types.ObjectId, ref: 'Category', required: true }, name: String }],
   subCategory: [String],
   tags: [String],
   collections: [String],

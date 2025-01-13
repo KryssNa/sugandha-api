@@ -8,7 +8,6 @@ import {
     addReviewSchema,
     createProductSchema,
     productQuerySchema,
-    updateProductSchema
 } from '../schemas/product.schema';
 import { UserRole } from '../types/user.types';
 
@@ -43,7 +42,7 @@ router.post(
 
 router.patch(
     '/:id',
-    validateRequest(updateProductSchema),
+    // validateRequest(updateProductSchema),
     ProductController.updateProduct
 );
 

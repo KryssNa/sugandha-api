@@ -7,11 +7,15 @@ import morgan from "morgan";
 import path from "path";
 import { errorHandler } from "./middlewares/error";
 import perfumeRoutes from "./routes/ai-recommendation.routes";
+import cartRoutes from "./routes/cart.routes";
 import categoryRoutes from "./routes/category.routes";
+import contactRoutes from "./routes/contact.routes";
 import productRoutes from "./routes/product.routes";
 import uploadsRoutes from "./routes/uploads.routes";
 import authRoutes from "./routes/user.routes";
 import variantsRoutes from "./routes/variant.routes";
+import wishlistRoutes from "./routes/wishlist.routes";
+import checkoutRoutes from "./routes/checkout.routes";
 
 const app = express();
 
@@ -46,20 +50,21 @@ app.get("/", (req: Request, res: Response) => {
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-
 // Routes
 app.use("/api/v1/perfume", perfumeRoutes);
-
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/variants", variantsRoutes);
 app.use("/api/v1/uploads", uploadsRoutes);
+app.use("/api/v1/contact", contactRoutes);
+app.use("/api/v1/wishlist", wishlistRoutes);
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/checkout", checkoutRoutes);
 
 
 
 // Error handling
 app.use(errorHandler);
-
 
 module.exports = app;

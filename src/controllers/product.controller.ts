@@ -8,6 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 export class ProductController {
   // Create new product
   static createProduct = asyncHandler(async (req: Request, res: Response) => {
+    console.log("body", req.body);
     if (!req.user || !['admin', 'manager'].includes(req.user.role)) {
       throw new AppError(403, 'Forbidden', [
         { message: 'You do not have permission to create products' }
