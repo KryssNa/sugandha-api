@@ -105,7 +105,7 @@ export class ProductService {
     }
 
     // Gender filter
-    if (gender) {
+    if (gender && gender !== 'all') {
       query.gender = gender;
     }
 
@@ -130,8 +130,15 @@ export class ProductService {
       const total = await Product.countDocuments({});
       const filteredTotal = await Product.countDocuments(query);
       
+      let sortOption = sort;
+      if (sort === 'priceAsc') {
+        sortOption = 'basePrice';
+      } else if (sort === 'priceDsc') {
+        sortOption = '-basePrice';
+      }
+
       const products = await Product.find(query)
-        .sort(sort)
+        .sort(sortOption)
         .skip((page - 1) * limit)
         .limit(limit);
 

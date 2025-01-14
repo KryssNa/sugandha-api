@@ -9,13 +9,11 @@ export class OrderService {
     orderData: any,
     userId?: string
   ) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
       // Validate product availability
       for (const item of orderData.items) {
-        const product = await Product.findById(item.product).session(session);
+        const product = await Product.findById(item.product);
         
         if (!product) {
           throw AppError.NotFound(`Product ${item.product} not found`);
@@ -29,17 +27,21 @@ export class OrderService {
       // Create order
       const order = await OrderModel.create([{
         ...orderData,
-        user: userId ? new mongoose.Types.ObjectId(userId) : undefined,
+        
+        user: userId ? userId : undefined,
+        paymentMethod: orderData.paymentMethod,
         guestEmail: orderData.isGuest ? orderData.guestEmail : undefined,
-        isGuest: !!orderData.isGuest
-      }], { session });
+        isGuest: !!orderData.isGuest,
+        guestId: orderData.isGuest ? orderData.guestId : undefined,
+      }], );
+
 
       // Update product quantities
       for (const item of orderData.items) {
         await Product.findByIdAndUpdate(
           item.product,
           { $inc: { quantity: -item.quantity } },
-          { session }
+          
         );
       }
 
@@ -48,18 +50,13 @@ export class OrderService {
         await CartModel.findOneAndUpdate(
           { user: userId },
           { items: [], totalAmount: 0 },
-          { session }
+          
         );
       }
-
-      await session.commitTransaction();
       return order[0];
     } catch (error) {
-      await session.abortTransaction();
       throw error;
-    } finally {
-      session.endSession();
-    }
+    } 
   }
 
   static async getOrderDetails(orderId: string, userId?: string) {

@@ -55,11 +55,11 @@ export const checkoutSchema = z.object({
     guestUserDetails: z.optional(guestUserSchema),
     orderData: z.object({
       items: z.array(z.object({
-        product: z.string(),
-        name: z.string(),
-        price: z.number().positive(),
-        quantity: z.number().int().positive()
-      })).nonempty(),
+        product: z.string({ message: 'Product ID is required' }),
+        name: z.string({ message: 'Product name is required' }),
+        price: z.number().positive({ message: 'Price must be positive' }),
+        quantity: z.number().int().positive({ message: 'Quantity must be positive' })
+      })).nonempty({ message: 'At least one item is required' }),
       shippingAddress: z.object({
         firstName: z.string().min(1, 'First name is required'),
         lastName: z.string().min(1, 'Last name is required'),
@@ -71,8 +71,8 @@ export const checkoutSchema = z.object({
         country: z.string().min(1, 'Country is required'),
         postalCode: z.string().min(1, 'Postal code is required')
       }),
-      totalAmount: z.number().positive(),
-      subtotal: z.number().positive(),
+      totalAmount: z.number().positive({ message: 'Total amount must be positive' }),
+      subtotal: z.number().positive({ message: 'Subtotal amount must be positive' }),
       tax: z.number().optional(),
       shippingCost: z.number().optional()
     }),

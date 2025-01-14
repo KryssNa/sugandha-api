@@ -109,11 +109,11 @@ export const productQuerySchema = z.object({
   query: z.object({
     page: z.string().optional(),
     limit: z.string().optional(),
-    sort: z.string().optional(),
+    sortBy: z.string().optional(),
     search: z.string().optional(),
     category: z.array(z.string()).optional(),
     brand: z.string().optional(),
-    gender: z.enum(['male', 'female', 'unisex']).optional(),
+    gender: z.enum(['male', 'female', 'unisex',"all"]).optional(),
     concentration: z.enum(['Parfum', 'EDP', 'EDT', 'EDC']).optional(),
     minPrice: z.string().optional(),
     maxPrice: z.string().optional(),

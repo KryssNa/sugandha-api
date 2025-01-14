@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema<UserDocument>({
     lowercase: true,
     trim: true,
   },
+
   password: {
     type: String,
     required: true,
@@ -49,6 +50,10 @@ const userSchema = new mongoose.Schema<UserDocument>({
   isActive: {
     type: Boolean,
     default: true,
+  },
+  isGuest:{
+    type: Boolean,
+    default: false
   },
   verificationToken: String,
   refreshToken: String,

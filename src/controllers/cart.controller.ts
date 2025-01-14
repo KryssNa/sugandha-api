@@ -15,7 +15,7 @@ export class CartController {
 
   static addToCart = asyncHandler(async (req: Request, res: Response) => {
     const { productId, quantity } = req.body;
-    const cart = await CartService.addToCart(req.user!._id, productId, quantity);
+    const cart = await CartService.addToCart(productId, quantity, req.user!._id);
     
     ApiResponse.success(res, {
       message: 'Product added to cart successfully',
@@ -59,18 +59,18 @@ export class CartController {
 
   static getCart = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?._id;
-    const sessionId = req.cookies['cart_session'];
+    // const sessionId = req.cookies['cart_session'];
     
-    const cart = await CartService.getCart(userId, sessionId);
+    const cart = await CartService.getCart(userId);
     
     // Set session cookie for guest users
-    if (!userId && !sessionId) {
-      res.cookie('cart_session', cart.sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
-    }
+    // if (!userId && !sessionId) {
+    //   res.cookie('cart_session', cart.sessionId, {
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === 'production',
+    //     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    //   });
+    // }
 
     ApiResponse.success(res, {
       message: 'Cart retrieved successfully',
@@ -89,8 +89,7 @@ export class CartController {
     }
 
     const cart = await CartService.mergeGuestCart(
-      req.user!._id,
-      sessionId
+      req.user!._id
     );
 
     // Clear guest cart cookie
@@ -109,8 +108,7 @@ export class CartController {
 
     const cart = await CartService.bulkUpdateQuantities(
       updates,
-      userId,
-      sessionId
+      userId
     );
 
     ApiResponse.success(res, {

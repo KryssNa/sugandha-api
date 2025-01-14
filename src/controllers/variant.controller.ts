@@ -8,7 +8,6 @@ export class VariantController {
     static createVariant = asyncHandler(async (req: Request, res: Response) => {
         const { productId } = req.params;
         const variant = await VariantService.create(productId, req.body);
-        console.log('variant', variant);
         ApiResponse.success(res, {
             statusCode: 201,
             message: 'Variant created successfully',

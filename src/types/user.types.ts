@@ -8,6 +8,7 @@ export interface IUser {
   role: UserRole;
   isVerified: boolean;
   isActive: boolean;
+  isGuest: boolean;
   verificationToken?: string;
   refreshToken?: string;
   createdAt: Date;
@@ -16,6 +17,7 @@ export interface IUser {
 
 // src/interfaces/user.interface.ts
 export enum UserRole {
+  GUEST= 'guest',
   USER = 'user',
   ADMIN = 'admin',
   MANAGER = 'manager',

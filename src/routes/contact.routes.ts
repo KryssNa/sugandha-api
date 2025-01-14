@@ -8,12 +8,14 @@ import { ContactController } from '../controllers/contact.controller';
 import { UploadMiddleware } from '../middlewares/upload';
 import { createContactSchema, updateContactStatusSchema } from '../schemas/contact.schema';
 import { UserRole } from '../types/user.types';
+import { optionalAuthenticate } from '../middlewares/optionalAuth';
 
 const router = Router();
 
 // Public routes
 router.post(
     '/',
+    optionalAuthenticate,
     UploadMiddleware.multiple('documents', 'attachment', 'attachment', 5), // Allow up to 5 file uploads
     validateRequest(createContactSchema),
     ContactController.createContact

@@ -9,12 +9,10 @@ export class PaymentService {
     userId: string, 
     paymentData: any
   ) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
       // Find the order
-      const order = await OrderModel.findById(orderId).session(session);
+      const order = await OrderModel.findById(orderId);
       
       if (!order) {
         throw AppError.NotFound('Order not found');
@@ -30,7 +28,7 @@ export class PaymentService {
           details: paymentData.details
         },
         status: 'pending'
-      }], { session });
+      }], );
 
       // Update order with payment reference
       await OrderModel.findByIdAndUpdate(
@@ -39,7 +37,7 @@ export class PaymentService {
           payment: payment[0]._id,
           status: 'processing' 
         },
-        { session }
+       
       );
 
       // Integrate with payment gateway (placeholder)
@@ -52,7 +50,7 @@ export class PaymentService {
           status: paymentResult.success ? 'completed' : 'failed',
           transactionReference: paymentResult.transactionId
         },
-        { session }
+        
       );
 
       // Update order status
@@ -61,10 +59,9 @@ export class PaymentService {
         { 
           status: paymentResult.success ? 'paid' : 'pending' 
         },
-        { session }
+        
       );
 
-      await session.commitTransaction();
 
       return {
         order,
@@ -72,10 +69,8 @@ export class PaymentService {
         success: paymentResult.success
       };
     } catch (error) {
-      await session.abortTransaction();
+      console.error('Error processing payment', error);
       throw error;
-    } finally {
-      session.endSession();
     }
   }
 
@@ -119,9 +114,9 @@ export class PaymentService {
 
   private static async validateDigitalWalletPayment(details: any, method: string) {
     // Basic validation for digital wallets
-    if (!details.phoneNumber && !details.email) {
-      return { success: false };
-    }
+    // if ( !details.email) {
+    //   return { success: false };
+    // }
 
     return { 
       success: true, 

@@ -8,7 +8,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 export class ProductController {
   // Create new product
   static createProduct = asyncHandler(async (req: Request, res: Response) => {
-    console.log("body", req.body);
     if (!req.user || !['admin', 'manager'].includes(req.user.role)) {
       throw new AppError(403, 'Forbidden', [
         { message: 'You do not have permission to create products' }
@@ -28,7 +27,7 @@ export class ProductController {
   static getProducts = asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
-    const sort = req.query.sort as string;
+    const sort = req.query.sortBy as string;
     const search = req.query.search as string;
     const category = req.query.category as string;
     const brand = req.query.brand as string;

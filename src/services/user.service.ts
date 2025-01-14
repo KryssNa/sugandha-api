@@ -76,8 +76,12 @@ export class UserService {
     return UserModel.findOne({ email }).exec();
   }
 
+  static async generateRandomPassword(): Promise<string> {
+    return Math.random().toString(36).slice(-8);
+  }
+
   // create guest user
-  static async createGuestUser(userData: Partial<UserDocument>): Promise<UserDocument> {
+  static async createGuestUser(userData: Partial<UserDocument>,password:string): Promise<UserDocument> {
     if (!userData.email) {
       throw AppError.ValidationError([
         { field: 'email', message: 'Email is required' }
@@ -86,13 +90,15 @@ export class UserService {
 
     const existingUser = await UserModel.findOne({ email: userData.email });
     if (existingUser) {
-      throw AppError.Conflict('Email already exists', [
-        { field: 'email', message: 'This email is already registered' }
-      ]);
+      console.log("Guest User already exists")
+      return existingUser;
+      // throw AppError.Conflict('Email already exists', [
+      //   { field: 'email', message: 'This email is already registered' }
+      // ]);
     }
 
     try {
-      return await UserModel.create(userData);
+      return await UserModel.create({...userData,password,role:"guest",isGuest:true});
     } catch (error) {
       if (error instanceof Error && error.name === 'ValidationError') {
         const errors = Object.values((error as any).errors).map((err: any) => ({

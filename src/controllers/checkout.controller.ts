@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
 import { OrderModel } from '../models/order.model';
 import { PaymentFailureModel } from '../models/paymentFailure.model';
 import { OrderService } from '../services/order.service';
@@ -27,21 +26,23 @@ export class CheckoutController {
 
             // 1. Handle User Context
             let finalUserId = userId;
-            if (isGuest && guestUserDetails) {
+            if (isGuest && guestUserDetails && !userId) {
                 // Create or retrieve guest user
                 finalUserId = await this.handleGuestUserCreation(
                     guestUserDetails,
                     // session
                 );
             }
-
             // 2. Create Order
             const order = await OrderService.createOrder(
                 {
                     ...orderData,
                     userId: finalUserId,
-                    isGuest
+                    paymentMethod: paymentData.method,
+                    isGuest,
+                    guestId: isGuest ? finalUserId : undefined,
                 },
+                userId ?? '',
             );
 
             // 3. Process Payment
@@ -108,7 +109,7 @@ export class CheckoutController {
                 errors: error instanceof Error ? [{ message: error.message }] : [{ message: 'Unknown error' }]
 
             });
-        } 
+        }
     });
 
     // Handle Guest User Creation or Retrieval
@@ -124,9 +125,13 @@ export class CheckoutController {
                 return existingUser._id;
             }
 
+            const password = await UserService.generateRandomPassword();
+
             // Create new guest user
             const newUser = await UserService.createGuestUser(
                 guestUserDetails,
+                password,
+
             );
 
             return newUser._id;
@@ -220,7 +225,7 @@ export class CheckoutController {
                 message: 'Payment retry failed',
                 errors: error instanceof Error ? [{ message: error.message }] : [{ message: 'Unknown error' }]
             });
-        } 
+        }
     });
 
     // Utility methods for sensitive data masking
@@ -244,4 +249,41 @@ export class CheckoutController {
             console.error('Failed to send payment failure notification', notificationError);
         }
     }
+
+    // order
+    // Get order details
+    static getOrderDetails = asyncHandler(async (req: Request, res: Response) => {
+        const { orderId } = req.params;
+        const userId = req.user?._id;
+
+        const order = await OrderService.getOrderDetails(orderId, userId);
+
+        ApiResponse.success(res, {
+            message: 'Order details retrieved successfully',
+            data: order
+        });
+    });
+
+    // Get user orders
+    static getUserOrders = asyncHandler(async (req: Request, res: Response) => {
+        const userId = req.user?._id;
+        const { page, limit } = req.query;
+
+        const { orders, total, totalPages } = await OrderService.getUserOrders(
+            userId ?? '',
+            Number(page),
+            Number(limit),
+        );
+
+        ApiResponse.success(res, {
+            message: 'User orders retrieved successfully',
+            data: {
+                orders,
+                total,
+                totalPages
+            }
+        });
+    }
+    )
+
 }

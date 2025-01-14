@@ -10,6 +10,7 @@ import {
     productQuerySchema,
 } from '../schemas/product.schema';
 import { UserRole } from '../types/user.types';
+import { optionalAuthenticate } from '../middlewares/optionalAuth';
 
 const router = Router();
 

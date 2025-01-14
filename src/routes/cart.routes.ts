@@ -38,6 +38,8 @@ router.post(
   CartController.applyCoupon
 );
 
-router.delete('/clear', CartController.clearCart);
+router.delete('/clear',
+
+  CartController.clearCart);
 
 export default router;

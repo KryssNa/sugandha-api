@@ -41,6 +41,7 @@ export interface OrderDocument extends Document {
     shippingCost: number;
     status: 'pending' | 'processing' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' |'payment-failed';
     isGuest: boolean;
+    guestId?: string;
     estimatedDelivery: Date;
 }
 
@@ -54,6 +55,10 @@ const orderSchema = new Schema<OrderDocument>({
         type: Schema.Types.ObjectId,
         ref: 'User',
         default: null
+    },
+    guestId: {
+        type: String,
+        sparse: true
     },
     guestEmail: {
         type: String,

@@ -62,9 +62,7 @@ export class WishlistService {
     productId: string,
     cartService: any
   ): Promise<void> {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
+    
     try {
       // Remove from wishlist and add to cart
       await Promise.all([
@@ -72,13 +70,9 @@ export class WishlistService {
         cartService.addToCart(userId, productId, 1)
       ]);
 
-      await session.commitTransaction();
     } catch (error) {
-      await session.abortTransaction();
       throw error;
-    } finally {
-      session.endSession();
-    }
+    } 
   }
 
   static async clearWishlist(userId: string): Promise<void> {
