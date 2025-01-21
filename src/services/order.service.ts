@@ -1,8 +1,7 @@
-import mongoose from 'mongoose';
-import { OrderModel } from '../models/order.model';
 import { CartModel } from '../models/cart.model';
-import { AppError } from '../utils/AppError';
+import { OrderModel } from '../models/order.model';
 import Product from '../models/poduct.model';
+import { AppError } from '../utils/AppError';
 
 export class OrderService {
   static async createOrder(
@@ -14,7 +13,7 @@ export class OrderService {
       // Validate product availability
       for (const item of orderData.items) {
         const product = await Product.findById(item.product);
-        
+
         if (!product) {
           throw AppError.NotFound(`Product ${item.product} not found`);
         }
@@ -27,13 +26,13 @@ export class OrderService {
       // Create order
       const order = await OrderModel.create([{
         ...orderData,
-        
+
         user: userId ? userId : undefined,
         paymentMethod: orderData.paymentMethod,
         guestEmail: orderData.isGuest ? orderData.guestEmail : undefined,
         isGuest: !!orderData.isGuest,
         guestId: orderData.isGuest ? orderData.guestId : undefined,
-      }], );
+      }],);
 
 
       // Update product quantities
@@ -41,7 +40,7 @@ export class OrderService {
         await Product.findByIdAndUpdate(
           item.product,
           { $inc: { quantity: -item.quantity } },
-          
+
         );
       }
 
@@ -50,13 +49,13 @@ export class OrderService {
         await CartModel.findOneAndUpdate(
           { user: userId },
           { items: [], totalAmount: 0 },
-          
+
         );
       }
       return order[0];
     } catch (error) {
       throw error;
-    } 
+    }
   }
 
   static async getOrderDetails(orderId: string, userId?: string) {
@@ -76,24 +75,24 @@ export class OrderService {
   }
 
   static async getUserOrders(
-    userId: string, 
-    page: number = 1, 
+    userId: string,
+    page: number = 1,
     limit: number = 10
   ) {
     const skip = (page - 1) * limit;
 
     const [orders, total] = await Promise.all([
-      OrderModel.find({ 
+      OrderModel.find({
         $or: [
           { user: userId },
           { guestEmail: userId }
         ]
       })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate('items.product'),
-      OrderModel.countDocuments({ 
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('items.product'),
+      OrderModel.countDocuments({
         $or: [
           { user: userId },
           { guestEmail: userId }
@@ -108,8 +107,31 @@ export class OrderService {
     };
   }
 
+  static async getAllOrders (
+    page: number = 1,
+    limit: number = 10
+  ) {
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      OrderModel.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('items.product'),
+      OrderModel.countDocuments()
+    ]);
+
+    return {
+      orders,
+      total,
+      totalPages: Math.ceil(total / limit)
+    };
+  }
+
+
   static async updateOrderStatus(
-    orderId: string, 
+    orderId: string,
     status: string,
     userId?: string
   ) {
