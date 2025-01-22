@@ -16,6 +16,7 @@ import authRoutes from "./routes/user.routes";
 import variantsRoutes from "./routes/variant.routes";
 import wishlistRoutes from "./routes/wishlist.routes";
 import checkoutRoutes from "./routes/checkout.routes";
+import orderRoutes from "./routes/order.routes";
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Routes
 app.use("/api/v1/perfume", perfumeRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", authRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/variants", variantsRoutes);
@@ -61,8 +63,7 @@ app.use("/api/v1/contact", contactRoutes);
 app.use("/api/v1/wishlist", wishlistRoutes);
 app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/checkout", checkoutRoutes);
-
-
+app.use("/api/v1/orders", orderRoutes);
 
 // Error handling
 app.use(errorHandler);
