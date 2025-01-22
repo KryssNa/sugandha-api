@@ -5,7 +5,14 @@ export interface IUser {
   firstName: string;
   lastName: string;
   avatar?: string;
+  contact?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
   role: UserRole;
+
   isVerified: boolean;
   isActive: boolean;
   isGuest: boolean;
@@ -17,7 +24,7 @@ export interface IUser {
 
 // src/interfaces/user.interface.ts
 export enum UserRole {
-  GUEST= 'guest',
+  GUEST = 'guest',
   USER = 'user',
   ADMIN = 'admin',
   MANAGER = 'manager',
