@@ -54,6 +54,7 @@ export class UserController {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+
           role: user.role
         },
         tokens: { accessToken, refreshToken }
@@ -70,6 +71,12 @@ export class UserController {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        contact: user.contact,
+        street: user.street,
+        city: user.city,
+        state: user.state,
+        country: user.country,
+        postalCode: user.postalCode,
         avatar: user.avatar,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
@@ -160,6 +167,12 @@ export class UserController {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        contact: user.contact,
+        street: user.street,
+        city: user.city,
+        state: user.state,
+        country: user.country,
+        postalCode: user.postalCode,
         avatar: user.avatar,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
