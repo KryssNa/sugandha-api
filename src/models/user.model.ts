@@ -1,13 +1,13 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import mongoose, { Document, Model } from 'mongoose';
 import { IUser, UserRole } from '../types/user.types';
-import crypto from 'crypto';
 
 interface IUserMethods {
   comparePassword(password: string): Promise<boolean>;
   generateVerificationToken(): string;
   verifyVerificationToken(token: string): boolean;
-  
+
 }
 
 export type UserDocument = Document & IUser & IUserMethods;
@@ -38,6 +38,13 @@ const userSchema = new mongoose.Schema<UserDocument>({
     trim: true,
   },
   avatar: String,
+  contact: String,
+
+  street: String,
+  city: String,
+  state: String,
+  country: String,
+  postalCode: String,
   role: {
     type: String,
     enum: Object.values(UserRole),
@@ -51,7 +58,7 @@ const userSchema = new mongoose.Schema<UserDocument>({
     type: Boolean,
     default: true,
   },
-  isGuest:{
+  isGuest: {
     type: Boolean,
     default: false
   },
