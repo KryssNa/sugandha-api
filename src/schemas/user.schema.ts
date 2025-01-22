@@ -16,6 +16,13 @@ export const createUserSchema = z.object({
     lastName: z.string()
       .min(1, 'Last name is required')
       .max(50, 'Last name is too long'),
+    contact: z.string().optional(),
+
+    street: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    postalCode: z.string().optional(),
     role: z.enum(['user', 'admin'], {
       errorMap: () => ({ message: 'Invalid role' })
     }).default('user'),
@@ -23,14 +30,19 @@ export const createUserSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-  params: z.object({
-    id: z.string().min(1, 'User ID is required'),
-  }),
+  // params: z.object({
+  //   id: z.string().min(1, 'User ID is required'),
+  // }).optional(),
   body: z.object({
     email: z.string().email('Invalid email format').optional(),
     firstName: z.string().min(1, 'First name is required').optional(),
     lastName: z.string().min(1, 'Last name is required').optional(),
-    age: z.number().min(18, 'Must be at least 18 years old').optional(),
+    contact: z.string().optional(),
+    street: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    postalCode: z.string().optional(),
   }).refine(data => Object.keys(data).length > 0, {
     message: 'At least one field must be provided for update'
   }),
