@@ -53,7 +53,7 @@ const ProductSchema = new Schema<IProduct>({
   // Perfume Specific
   concentration: {
     type: String,
-    enum: ['Parfum', 'EDP', 'EDT', 'EDC'],
+    
     required: true
   },
   scentNotes: [{
@@ -66,11 +66,10 @@ const ProductSchema = new Schema<IProduct>({
   }],
   sillage: {
     type: String,
-    enum: ['Intimate', 'Moderate', 'Strong', 'Enormous']
   },
   longevity: {
     type: String,
-    enum: ['Poor', 'Moderate', 'Long Lasting', 'Very Long Lasting']
+    
   },
   seasonality: [String],
   timeOfDay: [String],
@@ -135,6 +134,9 @@ ProductSchema.index({ isHot: 1, isFeatured: 1, isNewArrival: 1 });
 
 // Virtuals
 ProductSchema.virtual('discountPercentage').get(function () {
+  // console.log(this.originalPrice, this.basePrice);
+  console.log(this.originalPrice, this.basePrice);
+  console.log(((this.originalPrice - this.basePrice) / this.originalPrice) * 100);
   return Math.round(((this.originalPrice - this.basePrice) / this.originalPrice) * 100);
 });
 
