@@ -105,6 +105,7 @@ export class UserController {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        contact: user.contact,
         createdAt: user.createdAt
       })),
       message: 'Users retrieved successfully',
