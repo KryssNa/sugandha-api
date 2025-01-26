@@ -1,19 +1,18 @@
-import { PaymentModel } from '../models/payment.model';
 import { OrderModel } from '../models/order.model';
+import { PaymentModel } from '../models/payment.model';
 import { AppError } from '../utils/AppError';
-import mongoose from 'mongoose';
 
 export class PaymentService {
   static async processPayment(
-    orderId: string, 
-    userId: string, 
+    orderId: string,
+    userId: string,
     paymentData: any
   ) {
 
     try {
       // Find the order
       const order = await OrderModel.findById(orderId);
-      
+
       if (!order) {
         throw AppError.NotFound('Order not found');
       }
@@ -28,16 +27,16 @@ export class PaymentService {
           details: paymentData.details
         },
         status: 'pending'
-      }], );
+      }],);
 
       // Update order with payment reference
       await OrderModel.findByIdAndUpdate(
-        orderId, 
-        { 
+        orderId,
+        {
           payment: payment[0]._id,
-          status: 'processing' 
+          status: 'processing'
         },
-       
+
       );
 
       // Integrate with payment gateway (placeholder)
@@ -46,20 +45,20 @@ export class PaymentService {
       // Update payment status
       await PaymentModel.findByIdAndUpdate(
         payment[0]._id,
-        { 
+        {
           status: paymentResult.success ? 'completed' : 'failed',
           transactionReference: paymentResult.transactionId
         },
-        
+
       );
 
       // Update order status
       await OrderModel.findByIdAndUpdate(
-        orderId, 
-        { 
-          status: paymentResult.success ? 'paid' : 'pending' 
+        orderId,
+        {
+          status: paymentResult.success ? 'paid' : 'pending'
         },
-        
+
       );
 
 
@@ -97,8 +96,8 @@ export class PaymentService {
     const currentMonth = new Date().getMonth() + 1;
 
     if (
-      !cardDetails.cardNumber || 
-      !cardDetails.expiryMonth || 
+      !cardDetails.cardNumber ||
+      !cardDetails.expiryMonth ||
       !cardDetails.expiryYear ||
       cardDetails.expiryYear < currentYear ||
       (cardDetails.expiryYear === currentYear && cardDetails.expiryMonth < currentMonth)
@@ -106,9 +105,9 @@ export class PaymentService {
       return { success: false };
     }
 
-    return { 
-      success: true, 
-      transactionId: `CC-${Date.now()}` 
+    return {
+      success: true,
+      transactionId: `CC-${Date.now()}`
     };
   }
 
@@ -118,9 +117,11 @@ export class PaymentService {
     //   return { success: false };
     // }
 
-    return { 
-      success: true, 
-      transactionId: `${method.toUpperCase()}-${Date.now()}` 
+    return {
+      success: true,
+      transactionId: `${method.toUpperCase()}-${Date.now()}`
     };
   }
 }
+
+
