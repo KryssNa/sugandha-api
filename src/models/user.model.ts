@@ -7,6 +7,13 @@ interface IUserMethods {
   comparePassword(password: string): Promise<boolean>;
   generateVerificationToken(): string;
   verifyVerificationToken(token: string): boolean;
+  isPasswordReused(password: string): Promise<boolean>;
+  passwordHistory: Array<{
+    hash: string;
+    createdAt: Date;
+  }>;
+  createPasswordResetToken(): string;
+  generateEmailVerificationToken(): string;
 
 }
 
@@ -62,8 +69,62 @@ const userSchema = new mongoose.Schema<UserDocument>({
     type: Boolean,
     default: false
   },
-  verificationToken: String,
-  refreshToken: String,
+
+  refreshToken: {
+    type: String,
+    select: false,
+  },
+
+  passwordHistory: Array<{
+    hash: string;
+    createdAt: Date;
+  }>,
+  passwordResetToken: {
+    type: String,
+    select: false,
+  },
+  passwordResetExpires: Date,
+  verificationToken: {
+    type: String,
+    select: false,
+  },
+  verificationTokenExpires: Date,
+  loginAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lastLoginAttempt: Date,
+  lockUntil: Date,
+
+  activeDevices: [{
+    deviceId: { type: String, required: true },
+    deviceType: String,
+    browser: String,
+    operatingSystem: String,
+    ipAddress: String,
+    location: {
+      city: String,
+      country: String,
+      latitude: Number,
+      longitude: Number
+    },
+    lastActive: { type: Date, default: Date.now },
+    isCurrentDevice: { type: Boolean, default: false }
+  }],
+  maxDevices: { type: Number, default: 3 },
+
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: String,
+  emailVerificationTokenExpires: Date,
+  twoFactorEnabled: { type: Boolean, default: false },
+  twoFactorSecret: String,
+  twoFactorMethod: {
+    type: String,
+    enum: ['authenticator', 'sms', 'email'],
+    default: 'authenticator'
+  }
+
+
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -100,6 +161,36 @@ userSchema.methods.verifyVerificationToken = function (this: UserDocument, token
   return crypto.createHash('sha256').
     update(token).digest('hex') === this.verificationToken;
 }
+
+userSchema.methods.isPasswordReused = async function (candidatePassword: string): Promise<boolean> {
+  const passwordHistoryLimit = 5; // Keep last 5 passwords
+
+  for (const prevPassword of this.passwordHistory.slice(0, passwordHistoryLimit)) {
+    const isReused = await bcrypt.compare(candidatePassword, prevPassword.hash);
+    if (isReused) return true;
+  }
+  return false;
+};
+
+userSchema.methods.createPasswordResetToken = function (): string {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  return resetToken;
+};
+
+userSchema.methods.generateEmailVerificationToken = function(): string {
+  const token = crypto.randomBytes(32).toString('hex');
+  this.emailVerificationToken = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+  this.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  return token;
+};
 
 
 export const UserModel = mongoose.model<UserDocument, UserModel>('User', userSchema);
