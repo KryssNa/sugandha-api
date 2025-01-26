@@ -31,7 +31,7 @@ router.patch(
 );
 
 // Admin routes
-router.get("/users", authorize([UserRole.ADMIN]), UserController.getUsers);
+router.get("/", authorize([UserRole.ADMIN]), UserController.getUsers);
 
 router.patch("/users/:id", authorize([UserRole.ADMIN]), UserController.updateUserProfile);
 
