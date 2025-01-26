@@ -30,7 +30,7 @@ app.use(express.json());
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "https://localhost:3000",
   credentials: true, allowedHeaders: 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization',
   methods: 'GET, POST, PATCH, PUT, POST, DELETE, OPTIONS',
   optionsSuccessStatus: 200,
