@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { DeviceService } from '../services/device.service';
 import { UserService } from '../services/user.service';
 import { ApiResponse } from '../utils/apiResponse';
 import { AppError } from '../utils/AppError';
@@ -31,8 +32,42 @@ export class UserController {
     });
   });
 
+  // static login = asyncHandler(async (req: Request, res: Response) => {
+  //   const { email, password } = req.body;
+
+  //   const user = await UserService.findOne({ email }, { selectPassword: true });
+  //   if (!user || !(await user.comparePassword(password))) {
+  //     throw AppError.Unauthorized('Invalid credentials');
+  //   }
+
+  //   const [accessToken, refreshToken] = await Promise.all([
+  //     generateAccessToken(user._id),
+  //     generateRefreshToken(user._id)
+  //   ]);
+
+  //   await UserService.update(user._id, { refreshToken });
+
+  //   ApiResponse.success(res, {
+  //     message: 'Login successful',
+  //     data: {
+  //       user: {
+  //         id: user._id,
+  //         email: user.email,
+  //         firstName: user.firstName,
+  //         lastName: user.lastName,
+
+  //         role: user.role
+  //       },
+  //       tokens: { accessToken, refreshToken }
+  //     }
+  //   });
+  // });
+
+  // src/controllers/user.controller.ts
   static login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
+    const userAgent = req.get('User-Agent') || '';
+    const ipAddress = req.ip || '';
 
     const user = await UserService.findOne({ email }, { selectPassword: true });
     if (!user || !(await user.comparePassword(password))) {
@@ -44,6 +79,13 @@ export class UserController {
       generateRefreshToken(user._id)
     ]);
 
+    // Track device login
+    const deviceId = await DeviceService.trackDeviceLogin(
+      user,
+      userAgent,
+      ipAddress
+    );
+
     await UserService.update(user._id, { refreshToken });
 
     ApiResponse.success(res, {
@@ -54,11 +96,45 @@ export class UserController {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-
           role: user.role
         },
-        tokens: { accessToken, refreshToken }
+        tokens: {
+          accessToken,
+          refreshToken
+        },
+        deviceId
       }
+    });
+  });
+
+  static logout = asyncHandler(async (req: Request, res: Response) => {
+    const { deviceId } = req.body;
+
+    if (deviceId && req.user) {
+      await DeviceService.invalidateDevice(req.user, deviceId);
+    }
+
+    await UserService.update(req.user!._id, { refreshToken: '' });
+
+    ApiResponse.success(res, {
+      message: 'Logout successful'
+    });
+  });
+
+  static getActiveDevices = asyncHandler(async (req: Request, res: Response) => {
+    const user = await UserService.findById(req.user!._id);
+
+    ApiResponse.success(res, {
+      data: user.activeDevices.map(device => ({
+        deviceId: device.deviceId,
+        deviceType: device.deviceType,
+        browser: device.browser,
+        operatingSystem: device.operatingSystem,
+        lastActive: device.lastActive,
+        isCurrentDevice: device.isCurrentDevice,
+        location: device.location
+      })),
+      message: 'Active devices retrieved successfully'
     });
   });
 
@@ -129,15 +205,6 @@ export class UserController {
       data: {},
       message: 'Password changed successfully'
     });
-  });
-
-  static logout = asyncHandler(async (req: Request, res: Response) => {
-    await UserService.update(req.user!._id, { refreshToken: '' });
-    ApiResponse.success(res,
-
-      {
-        message: 'Logout successful'
-      });
   });
 
   static getUserProfile = asyncHandler(async (req: Request, res: Response) => {
