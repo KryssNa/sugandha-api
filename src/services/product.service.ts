@@ -1,10 +1,10 @@
 // src/services/product.service.ts
 import mongoose, { FilterQuery, UpdateQuery } from 'mongoose';
 
+import slugify from 'slugify';
+import Product from '../models/product.modal';
 import { IProduct } from '../types/product.types';
 import { AppError } from '../utils/AppError';
-import slugify from 'slugify';
-import Product from '../models/poduct.model';
 
 interface FindAllOptions {
   filter?: FilterQuery<IProduct>;
@@ -26,7 +26,7 @@ export class ProductService {
     try {
       // Generate slug from title
       const slug = slugify(productData.title!, { lower: true });
-      
+
       // Generate SKU
       const sku = await this.generateSKU(productData.brand!);
 
@@ -129,7 +129,7 @@ export class ProductService {
     try {
       const total = await Product.countDocuments({});
       const filteredTotal = await Product.countDocuments(query);
-      
+
       let sortOption = sort;
       if (sort === 'priceAsc') {
         sortOption = 'basePrice';
@@ -182,7 +182,7 @@ export class ProductService {
     const existingReview = product.reviews.find(
       review => review.userId.toString() === userId
     );
-    
+
     if (existingReview) {
       throw new AppError(400, 'Review already exists', [
         { message: 'You have already reviewed this product' }
