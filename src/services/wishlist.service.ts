@@ -1,13 +1,13 @@
-import Product from '../models/poduct.model';
-import { WishlistModel, WishlistDocument } from '../models/wishlist.model';
-import { AppError } from '../utils/AppError';
 import mongoose from 'mongoose';
+import Product from '../models/product.modal';
+import { WishlistDocument, WishlistModel } from '../models/wishlist.model';
+import { AppError } from '../utils/AppError';
 
 export class WishlistService {
   static async getWishlist(userId: string): Promise<WishlistDocument> {
     const wishlist = await WishlistModel.findOne({ user: userId })
       .populate('products', 'name image price inStock rating');
-    
+
     if (!wishlist) {
       // Create new wishlist if doesn't exist
       return WishlistModel.create({
@@ -24,7 +24,7 @@ export class WishlistService {
     productId: string
   ): Promise<WishlistDocument> {
     // Validate product exists
-    const product = await Product   .findById(productId);
+    const product = await Product.findById(productId);
     if (!product) {
       throw AppError.NotFound('Product not found');
     }
@@ -62,7 +62,7 @@ export class WishlistService {
     productId: string,
     cartService: any
   ): Promise<void> {
-    
+
     try {
       // Remove from wishlist and add to cart
       await Promise.all([
@@ -72,7 +72,7 @@ export class WishlistService {
 
     } catch (error) {
       throw error;
-    } 
+    }
   }
 
   static async clearWishlist(userId: string): Promise<void> {
