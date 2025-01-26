@@ -1,8 +1,11 @@
 // config/email.ts
-import nodemailer from 'nodemailer';
-import handlebars from 'handlebars';
+import dotenv from 'dotenv';
 import fs from 'fs/promises';
+import handlebars from 'handlebars';
+import nodemailer from 'nodemailer';
 import path from 'path';
+dotenv.config();
+
 
 interface EmailOptions {
   to: string;
@@ -23,15 +26,20 @@ const createTransporter = () => {
       },
     });
   }
-  
+
   // For development (using Ethereal - fake SMTP service)
   return nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false,
+    // host: 'smtp.ethereal.email',
+    // port: 587,
+    // secure: false,
+    // auth: {
+    //   user: process.env.EMAIL_USER,
+    //   pass: process.env.EMAIL_PASS,
+    // },
+    service: process.env.EMAIL_SERVICE, // e.g., 'Gmail', 'SendGrid'
     auth: {
-      user: process.env.DEV_EMAIL_USER,
-      pass: process.env.DEV_EMAIL_PASS,
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
     },
   });
 };
@@ -45,7 +53,7 @@ const getTemplate = async (templateName: string): Promise<handlebars.TemplateDel
     return templateCache[templateName];
   }
 
-  const templatePath = path.join(__dirname, '../templates/email', `${templateName}.hbs`);
+  const templatePath = path.join(__dirname, '../templates/email/layouts', `${templateName}.hbs`);
   const templateContent = await fs.readFile(templatePath, 'utf-8');
   const template = handlebars.compile(templateContent);
   templateCache[templateName] = template;
