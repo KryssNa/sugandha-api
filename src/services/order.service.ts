@@ -1,7 +1,8 @@
 import { CartModel } from '../models/cart.model';
 import { OrderModel } from '../models/order.model';
-import Product from '../models/poduct.model';
+import Product from '../models/product.modal';
 import { AppError } from '../utils/AppError';
+import { ObjectId } from 'mongodb';
 
 export class OrderService {
   static async createOrder(
@@ -59,13 +60,16 @@ export class OrderService {
   }
 
   static async getOrderDetails(orderId: string, userId?: string) {
-    const order = await OrderModel.findOne({
-      _id: orderId,
-      $or: [
-        { user: userId },
-        { guestEmail: userId }
-      ]
-    }).populate('items.product');
+    console.log('userId', userId);
+    console.log('orderId', orderId);
+    const order = await OrderModel.findById(orderId).populate('items.product');
+    // const order = await OrderModel.findOne({
+    //   _id: new ObjectId(orderId),
+    //   $or: [
+    //     { user: userId },
+    //     { guestEmail: userId }
+    //   ]
+    // }).populate('items.product');
 
     if (!order) {
       throw AppError.NotFound('Order not found');
@@ -118,7 +122,7 @@ export class OrderService {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate('items.product'),
+        .populate('items.product user'),
       OrderModel.countDocuments()
     ]);
 
