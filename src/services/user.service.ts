@@ -1,4 +1,7 @@
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { FilterQuery, Types, UpdateQuery } from 'mongoose';
+import { sendEmail } from '../config/email';
 import { UserDocument, UserModel } from '../models/user.model';
 import { AppError } from '../utils/AppError';
 
@@ -81,7 +84,7 @@ export class UserService {
   }
 
   // create guest user
-  static async createGuestUser(userData: Partial<UserDocument>,password:string): Promise<UserDocument> {
+  static async createGuestUser(userData: Partial<UserDocument>, password: string): Promise<UserDocument> {
     if (!userData.email) {
       throw AppError.ValidationError([
         { field: 'email', message: 'Email is required' }
@@ -98,7 +101,7 @@ export class UserService {
     }
 
     try {
-      return await UserModel.create({...userData,password,role:"guest",isGuest:true});
+      return await UserModel.create({ ...userData, password, role: "guest", isGuest: true });
     } catch (error) {
       if (error instanceof Error && error.name === 'ValidationError') {
         const errors = Object.values((error as any).errors).map((err: any) => ({
@@ -221,24 +224,68 @@ export class UserService {
     return true;
   }
 
+  // static async changePassword(
+  //   id: string,
+  //   currentPassword: string,
+  //   newPassword: string
+  // ): Promise<void> {
+  //   const user = await this.findById(id, { selectPassword: true });
+  //   const isPasswordValid = await user.comparePassword(currentPassword);
+
+  //   if (!isPasswordValid) {
+  //     throw AppError.BadRequest('Invalid current password', [
+  //       { field: 'currentPassword', message: 'Current password is incorrect' }
+  //     ]);
+  //   }
+
+  //   user.password = newPassword;
+  //   await user.save();
+  // }
+
+  // src/services/user.service.ts
   static async changePassword(
     id: string,
     currentPassword: string,
     newPassword: string
   ): Promise<void> {
     const user = await this.findById(id, { selectPassword: true });
-    const isPasswordValid = await user.comparePassword(currentPassword);
 
+    // Check current password
+    const isPasswordValid = await user.comparePassword(currentPassword);
     if (!isPasswordValid) {
-      throw AppError.BadRequest('Invalid current password', [
-        { field: 'currentPassword', message: 'Current password is incorrect' }
-      ]);
+      throw AppError.BadRequest('Invalid current password');
     }
+
+    // Check password reuse
+    const isPasswordReused = await user.isPasswordReused(newPassword);
+    if (isPasswordReused) {
+      throw AppError.BadRequest('Cannot reuse recent passwords');
+    }
+
+    // Update password history
+    user.passwordHistory.unshift({
+      hash: await bcrypt.hash(newPassword, 12),
+      createdAt: new Date()
+    });
+
+    // Limit password history
+    user.passwordHistory = user.passwordHistory.slice(0, 5);
 
     user.password = newPassword;
     await user.save();
   }
 
+  static async initiatePasswordReset(email: string): Promise<string> {
+    const user = await this.findByEmail(email);
+    if (!user) {
+      throw AppError.NotFound('User not found');
+    }
+
+    const resetToken = user.createPasswordResetToken();
+    await user.save();
+
+    return resetToken; // To be used in email sending
+  }
 
   static async verifyEmail(verificationToken: string): Promise<UserDocument> {
     const user = await UserModel.findOne({ verificationToken });
@@ -256,19 +303,19 @@ export class UserService {
 
   }
 
-  static async generateVerificationToken(email: string): Promise<UserDocument> {
-    const user = await UserModel.findOne({ email });
-    if (!user) {
-      throw AppError.NotFound('User not found', [
-        { field: 'email', message: 'No user exists with this email' }
-      ]);
-    }
+  // static async generateVerificationToken(email: string): Promise<UserDocument> {
+  //   const user = await UserModel.findOne({ email });
+  //   if (!user) {
+  //     throw AppError.NotFound('User not found', [
+  //       { field: 'email', message: 'No user exists with this email' }
+  //     ]);
+  //   }
 
-    user.verificationToken = UserModel.generateVerificationToken();
-    await user.save();
+  //   user.verificationToken = UserModel.generateVerificationToken();
+  //   await user.save();
 
-    return user;
-  }
+  //   return user;
+  // }
 
   static async verifyVerificationToken(token: string): Promise<UserDocument> {
     const user = await UserModel.findOne({ verificationToken: token });
@@ -302,4 +349,100 @@ export class UserService {
 
     return sanitized;
   }
+
+  static async generateVerificationToken(user: UserDocument): Promise<string> {
+    const token = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+    user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+    return token;
+  }
+
+  static async sendVerificationEmail(user: UserDocument): Promise<void> {
+    const token = await this.generateVerificationToken(user);
+    const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Verify Your Email',
+      template: 'verification',
+      context: {
+        firstName: user.firstName,
+        verificationLink
+      }
+    });
+  }
+
+  static async sendPasswordResetEmail(user: UserDocument): Promise<string> {
+    const token = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
+    await user.save();
+
+    const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset Request',
+      template: 'password-reset',
+      context: {
+        firstName: user.firstName,
+        resetLink
+      }
+    });
+
+    return token;
+  }
+
+  // In user.service.ts
+  static async verifyPasswordResetToken(token: string): Promise<UserDocument> {
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const user = await UserModel.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      throw AppError.BadRequest('Invalid or expired reset token');
+    }
+
+    return user;
+  }
+  static async resetPassword(
+    token: string,
+    newPassword: string
+  ): Promise<void> {
+    const user = await this.verifyPasswordResetToken(token);
+
+    // Prevent password reuse
+    const isPasswordReused = await user.isPasswordReused(newPassword);
+    if (isPasswordReused) {
+      throw AppError.BadRequest('Cannot reuse recent passwords');
+    }
+
+    // Update password
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.password = newPassword;
+
+    // Update password history
+    user.passwordHistory.unshift({
+      hash: await bcrypt.hash(newPassword, 12),
+      createdAt: new Date()
+    });
+    user.passwordHistory = user.passwordHistory.slice(0, 5);
+
+    await user.save();
+  }
+
 }

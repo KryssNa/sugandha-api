@@ -1,3 +1,19 @@
+export interface UserDevice {
+  deviceId: string;
+  deviceType: string;
+  browser: string;
+  operatingSystem: string;
+  ipAddress: string;
+  location?: {
+    city?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  lastActive: Date;
+  isCurrentDevice?: boolean;
+}
+
 export interface IUser {
   _id: string;
   email: string;
@@ -13,11 +29,32 @@ export interface IUser {
   postalCode?: string;
   role: UserRole;
 
+  refreshToken?: string;
+
   isVerified: boolean;
   isActive: boolean;
   isGuest: boolean;
+  passwordHistory?: Array<{
+    hash: string;
+    createdAt: Date;
+  }>;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   verificationToken?: string;
-  refreshToken?: string;
+  verificationTokenExpires?: Date;
+  loginAttempts?: number;
+  lastLoginAttempt?: Date;
+  activeDevices: UserDevice[];
+  maxDevices?: number;
+  lockUntil?: Date;
+
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  emailVerificationTokenExpires?: Date;
+  twoFactorEnabled: boolean;
+  twoFactorSecret?: string;
+  twoFactorMethod: 'authenticator' | 'sms' | 'email';
+
   createdAt: Date;
   updatedAt: Date;
 }
