@@ -80,7 +80,6 @@ export class AuthController {
     static enableTwoFactor = asyncHandler(async (req: Request, res: Response) => {
         const user = await UserService.findById(req.user!._id);
         const { token } = req.body;
-        console.log("token", token)
 
         // Verify token
         if (!user.twoFactorSecret) {
@@ -125,7 +124,6 @@ export class AuthController {
         const { email, password, twoFactorToken } = req.body;
 
         const user = await UserService.findOne({ email }, { selectPassword: true });
-        console.log("user", user)
         // Validate password
         if (!user || !(await user.comparePassword(password))) {
             throw AppError.Unauthorized('Invalid credentials');
@@ -138,8 +136,6 @@ export class AuthController {
             }
 
             const isValid = user.twoFactorSecret ? TwoFactorService.verifyToken(user.twoFactorSecret, twoFactorToken) : false;
-            console.log("isvlaid",isValid)
-            console.log("isvlaid1",twoFactorToken)
             if (!isValid) {
                 throw AppError.Unauthorized('Invalid 2FA token');
             }
