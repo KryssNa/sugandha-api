@@ -8,6 +8,7 @@ import { AppError } from "../utils/AppError";
 
 type RoleOrRoles = UserRole | UserRole[];
 
+// checking role based access
 export const authorize = (allowedRoles: RoleOrRoles) => {
   // Convert single role to array for consistency
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
