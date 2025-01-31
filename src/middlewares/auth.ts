@@ -106,6 +106,7 @@ export const authenticate = asyncHandler(async (
   }
 });
 
+// secure authentication
 export const secureAuthentication = asyncHandler(async (
   req: Request,
   res: Response,
