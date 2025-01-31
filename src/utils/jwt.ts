@@ -37,6 +37,7 @@ const parseExpirationTime = (time: string): number => {
   }
 };
 
+// Generate access token
 export const generateAccessToken = async (userId: string): Promise<string> => {
   try {
     const jwt = await new SignJWT({ userId })
@@ -64,6 +65,7 @@ interface Tokens {
   refreshToken: string;
 }
 
+// Generate access token and refresh token and set them as cookies
 export const generateTokensAndSetCookies = async ({ res, userId }: {
   res: any;
   userId: string;
@@ -71,6 +73,7 @@ export const generateTokensAndSetCookies = async ({ res, userId }: {
   const accessToken = await generateAccessToken(userId);
   const refreshToken = await generateRefreshToken(userId);
 
+  // Set cookies
   setCookie({ res }, 'accessToken', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
