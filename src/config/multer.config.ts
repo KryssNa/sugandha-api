@@ -1,8 +1,8 @@
 // src/config/multerConfig.ts
+import { Request } from 'express';
+import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 // Custom error for file upload
@@ -28,17 +28,17 @@ const DEFAULT_CONFIG = {
   },
   videos: {
     allowedMimeTypes: [
-      'video/mp4', 
-      'video/mpeg', 
-      'video/quicktime', 
+      'video/mp4',
+      'video/mpeg',
+      'video/quicktime',
       'video/x-msvideo'
     ],
     maxFileSize: 50 * 1024 * 1024, // 50MB
   },
   documents: {
     allowedMimeTypes: [
-      'application/pdf', 
-      'application/msword', 
+      'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ],
     maxFileSize: 10 * 1024 * 1024, // 10MB
@@ -68,7 +68,7 @@ export class FileUploadManager {
         cb(null, uploadPath);
       },
       filename: (req, file, cb) => {
-        const filename = options?.generateFileName 
+        const filename = options?.generateFileName
           ? options.generateFileName(file)
           : this.generateUniqueFileName(file);
         cb(null, filename);
@@ -93,8 +93,8 @@ export class FileUploadManager {
 
   // Create upload instance
   static createUploader(
-    uploadType: keyof typeof DEFAULT_CONFIG, 
-    uploadPath: string, 
+    uploadType: keyof typeof DEFAULT_CONFIG,
+    uploadPath: string,
     options?: UploadOptions
   ) {
     const mergedOptions = {
@@ -114,11 +114,11 @@ export class FileUploadManager {
 
 // Utility function to generate upload path
 export const generateUploadPath = (
-  category: string, 
+  category: string,
   subCategory?: string
 ) => {
   const basePath = path.join(process.cwd(), 'uploads');
-  return subCategory 
+  return subCategory
     ? path.join(basePath, category, subCategory)
     : path.join(basePath, category);
 };
