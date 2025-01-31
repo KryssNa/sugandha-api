@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { UserService } from "../services/user.service";
 import { verifyAccessToken } from "../utils/jwt";
 
+// Middleware to optionally authenticate users
 export const optionalAuthenticate = async (
     req: Request,
     _res: Response,

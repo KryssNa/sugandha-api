@@ -59,9 +59,9 @@ export class IPBlockService {
       blockEntry.attempts++;
     }
 
-    // Exponential backoff blocking
-    if (blockEntry.attempts > 5) {
-      const blockDuration = Math.pow(2, blockEntry.attempts - 5) * 15 * 60 * 1000;
+    // Block after 15 requests
+    if (blockEntry.attempts > 15) {
+      const blockDuration = 15 * 60 * 1000; // 15 minutes
       blockEntry.blockUntil = new Date(now.getTime() + blockDuration);
     }
 
