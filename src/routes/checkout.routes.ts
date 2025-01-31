@@ -7,6 +7,7 @@ import {
     paymentRetrySchema
 } from '../schemas/checkout.schema';
 import { optionalAuthenticate } from '../middlewares/optionalAuth';
+import { activityLogger } from '../middlewares/activityLogger';
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.post(
     '/',
     optionalAuthenticate,
     validateRequest(checkoutSchema),
+    activityLogger,
     CheckoutController.processCheckout
 );
 
@@ -22,6 +24,7 @@ router.post(
 router.post(
     '/retry-payment/:orderId',
     authenticate,
+    activityLogger,
     validateRequest(paymentRetrySchema),
     CheckoutController.retryPayment
 );
@@ -30,6 +33,7 @@ router.post(
 router.get(
     '/orders/:orderId',
     optionalAuthenticate,
+    activityLogger,
     CheckoutController.getOrderDetails
 );
 
@@ -37,6 +41,7 @@ router.get(
 router.get(
     '/orders',
     authenticate,
+    activityLogger,
     CheckoutController.getUserOrders
 );
 export default router;
