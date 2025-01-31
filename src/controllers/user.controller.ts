@@ -40,19 +40,17 @@ export class UserController {
 
     const user = await UserService.authenticateUser(email, password);
 
+    // check if twofactor is enabled
     if (user.twoFactorEnabled) {
       if (!twoFactorToken) {
         throw AppError.Unauthorized('2FA token is required');
       }
 
       const isValid = user.twoFactorSecret ? TwoFactorService.verifyToken(user.twoFactorSecret, twoFactorToken) : false;
-      console.log("isvlaid", isValid)
-      console.log("isvlaid1", twoFactorToken)
       if (!isValid) {
         throw AppError.Unauthorized('Invalid 2FA token');
       }
     }
-
 
     const { accessToken, refreshToken } = await generateTokensAndSetCookies({ res, userId: user._id });
 
@@ -95,6 +93,7 @@ export class UserController {
     });
   });
 
+  // logout function
   static logout = asyncHandler(async (req: Request, res: Response) => {
     const { deviceId } = req.body;
 
@@ -110,6 +109,7 @@ export class UserController {
     res.clearCookie('accessToken', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     res.clearCookie('refreshToken', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     res.clearCookie('user', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.clearCookie('role', { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production' });
 
     // Send response
     ApiResponse.success(res, {
