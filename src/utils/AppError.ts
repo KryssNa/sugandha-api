@@ -10,6 +10,7 @@ export interface ApiErrorDetail {
   path?: (string | number)[];
 }
 
+// Custom error class for handling application errors
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly status: ApiStatus;
@@ -49,38 +50,6 @@ export class AppError extends Error {
       }
     }
 
-    // // Handle Zod validation errors
-    // if (error instanceof ZodError) {
-    //   const errors = error.errors.map(err => ({
-    //     field: err.path.join('.'),
-    //     message: err.message,
-    //     code: err.code,
-    //     path: err.path
-    //   }));
-    //   return new AppError(400, 'Validation failed', errors, 'fail');
-    // }
-    // Handle Zod validation errors
-    // if (error instanceof ZodError) {
-    //   const errors = error.errors.map(err => {
-    //     const fieldName = String(err.path.slice(-1)[0]); // Extract the last part of the path (field name) and convert to string
-    //     return {
-    //       field: fieldName,
-    //       message: `${fieldName} is required`, // Customize message format
-    //       code: err.code || 'INVALID_INPUT',
-    //     };
-    //   });
-
-    //   const formattedMessage = errors
-    //     .map(e => `${e.field}`)
-    //     .join('; ');
-
-    //   return new AppError(
-    //     400,
-    //     `Validation failed on field(s): ${formattedMessage}`,
-    //     errors,
-    //     'fail'
-    //   );
-    // }
     // Handle Zod validation errors
     if (error instanceof ZodError) {
       const errors = error.errors.map(err => {
