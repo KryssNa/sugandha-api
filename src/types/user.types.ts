@@ -49,6 +49,7 @@ export interface IUser {
   maxDevices?: number;
   lockUntil?: Date;
   isLocked?: boolean;
+  passwordChangedAt?: Date;
 
   isEmailVerified: boolean;
   emailVerificationToken?: string;

@@ -62,7 +62,7 @@ export class UserService {
       const remainingLockTime = Math.ceil(
         ((user.lockUntil?.getTime() || 0) - Date.now()) / (1000 * 60)
       );
-      throw AppError.Forbidden(`Account locked. Try again in ${remainingLockTime} minutes`);
+      throw AppError.Forbidden(`Your account has been locked due to multiple failed attempt. Please Try again in ${remainingLockTime} minutes`);
     }
 
     // Verify password
@@ -74,10 +74,18 @@ export class UserService {
 
       // Lock account after 5 failed attempts
       if (user.loginAttempts >= 5) {
-        user.lockUntil = new Date(Date.now() + 1 * 60 * 1000); // 30 minutes lock
+        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes lock
         user.isLocked = true;
       }
 
+      // Check if password is expired
+      const passwordAge = Date.now() - (user.passwordChangedAt?.getTime() || 0);
+      const maxPasswordAge = 60 * 24 * 60 * 60 * 1000; // 60 days in milliseconds
+
+      if (passwordAge > maxPasswordAge) {
+        throw AppError.Forbidden('Your password has expired. Please reset your password.');
+      }
+    
       await user.save();
       throw AppError.Unauthorized('Invalid credentials');
     }
@@ -93,11 +101,11 @@ export class UserService {
 
   static async unlockAccount(email: string): Promise<void> {
     const user = await this.findByEmail(email);
-    
+
     if (!user) {
       throw AppError.NotFound('User not found');
     }
-  
+
     user.loginAttempts = 0;
     user.lockUntil = undefined;
     user.isLocked = false;
@@ -382,7 +390,7 @@ export class UserService {
     return user;
   }
 
-  
+
 
   static async getUserProfile(id: string): Promise<UserDocument> {
     const user = await this.findById(id, { select: '-password -refreshToken' });

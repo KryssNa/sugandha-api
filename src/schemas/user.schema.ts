@@ -10,7 +10,8 @@ export const createUserSchema = z.object({
     password: z.string()
       .min(8, 'Password must be at least 8 characters')
       .max(100, 'Password is too long')
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, 
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
     firstName: z.string()
       .min(1, 'First name is required')
       .max(50, 'First name is too long'),
