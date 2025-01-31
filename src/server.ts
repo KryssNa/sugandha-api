@@ -1,43 +1,8 @@
-// import { connectDB } from "./config/database";
-// import { logger } from "./utils/logger";
-
-// const express = require("express");
-// const app = require("./app");
-
-// const server = express();
-// connectDB();
-// server.use(app);
-
-// const PORT = process.env.PORT;
-
-// server.listen(PORT, () => {
-//   console.log("server running in dev mode on port 5000");
-// });
-
-// const gracefulShutdown = async () => {
-//   server.close(() => {
-//     logger.info("Server closed");
-//     process.exit(0);
-//   });
-// };
-
-// process.on("SIGTERM", gracefulShutdown);
-// process.on("SIGINT", gracefulShutdown);
-// process.on("uncaughtException", (error) => {
-//   logger.error("Uncaught exception", error);
-//   process.exit(1);
-// });
-
-// process.on("unhandledRejection", (error) => {
-//   logger.error("Unhandled rejection", error);
-//   process.exit(1);
-// });
-
 import * as fs from 'fs';
 import * as https from 'https';
 import * as path from 'path';
 import { connectDB } from "./config/database";
-import { logger } from "./utils/logger";
+import { serverLogger } from './utils/logger';
 
 const express = require("express");
 const app = require("./app");
@@ -46,7 +11,7 @@ const server = express();
 connectDB();
 server.use(app);
 
-const PORT = process.env.PORT || 443;
+const PORT = process.env.PORT ;
 
 // SSL certificate configuration
 const options = {
@@ -60,12 +25,12 @@ const options = {
 const httpsServer = https.createServer(options, server);
 
 httpsServer.listen(PORT, () => {
-  logger.info(`HTTPS Server running on port ${PORT}`);
+  serverLogger.info(`HTTPS Server running on port ${PORT}`);
 });
 
 const gracefulShutdown = async () => {
   httpsServer.close(() => {
-    logger.info("Server closed");
+    serverLogger.info("Server closed");
     process.exit(0);
   });
 };
@@ -73,11 +38,11 @@ const gracefulShutdown = async () => {
 process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
 process.on("uncaughtException", (error) => {
-  logger.error("Uncaught exception", error);
+  serverLogger.error("Uncaught exception", error);
   process.exit(1);
 });
 
 process.on("unhandledRejection", (error) => {
-  logger.error("Unhandled rejection", error);
+  serverLogger.error("Unhandled rejection", error);
   process.exit(1);
 });
