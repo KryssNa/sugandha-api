@@ -75,6 +75,8 @@ const userSchema = new mongoose.Schema<UserDocument>({
     select: false,
   },
 
+  passwordChangedAt: Date,
+
   passwordHistory: Array<{
     hash: string;
     createdAt: Date;
@@ -136,12 +138,14 @@ const userSchema = new mongoose.Schema<UserDocument>({
   toObject: { virtuals: true },
 });
 
+//encrypt password using bcrypt
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
+    this.passwordChangedAt = new Date(Date.now() - 1000);
     next();
   } catch (error) {
     next(error as Error);
@@ -177,6 +181,7 @@ userSchema.methods.isPasswordReused = async function (candidatePassword: string)
   return false;
 };
 
+// Create password reset token
 userSchema.methods.createPasswordResetToken = function (): string {
   const resetToken = crypto.randomBytes(32).toString('hex');
   this.passwordResetToken = crypto
