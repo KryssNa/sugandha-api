@@ -19,11 +19,7 @@ export const activityLogger = async (req: Request, res: Response, next: NextFunc
             action,
             ipAddress,
             userAgent,
-            details: {
-                body: safeBody, // Log sanitized request body
-                params: req.params,
-                query: req.query,
-            },
+            
         });
 
         next();
