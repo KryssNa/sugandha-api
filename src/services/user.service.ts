@@ -427,7 +427,7 @@ export class UserService {
 
   static async sendVerificationEmail(user: UserDocument): Promise<void> {
     const token = await this.generateVerificationToken(user);
-    const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+    const verificationLink = `${process.env.CLIENT_URL}/auth/verify-email?token=${token}`;
 
     await sendEmail({
       to: user.email,
@@ -449,7 +449,7 @@ export class UserService {
     user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
     await user.save();
 
-    const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+    const resetLink = `${process.env.CLIENT_URL}/auth/reset-password?token=${token}`;
 
     await sendEmail({
       to: user.email,

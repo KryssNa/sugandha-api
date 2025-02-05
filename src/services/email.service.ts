@@ -34,7 +34,7 @@ export class EmailService {
     }
 
     static async sendVerificationEmail(email: string, token: string) {
-        const verificationLink = `${config.CLIENT_URL}/verify-email?token=${token}`;
+        const verificationLink = `${config.CLIENT_URL}/auth/verify-email?token=${token}`;
 
         await this.sendEmail({
             to: email,
@@ -49,7 +49,7 @@ export class EmailService {
     }
 
     static async sendPasswordResetEmail(email: string, token: string) {
-        const resetLink = `${config.CLIENT_URL}/reset-password?token=${token}`;
+        const resetLink = `${config.CLIENT_URL}/auth/reset-password?token=${token}`;
 
         await this.sendEmail({
             to: email,
