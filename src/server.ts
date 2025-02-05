@@ -11,7 +11,7 @@ const server = express();
 connectDB();
 server.use(app);
 
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT || 5050 ;
 
 // SSL certificate configuration
 const options = {
@@ -24,7 +24,7 @@ const options = {
 // Create HTTPS server
 const httpsServer = https.createServer(options, server);
 
-httpsServer.listen(PORT, () => {
+server.listen(PORT, () => {
   serverLogger.info(`HTTPS Server running on port ${PORT}`);
 });
 
