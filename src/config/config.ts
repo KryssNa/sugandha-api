@@ -10,6 +10,9 @@ export const config = {
     CLIENT_URL: process.env.CLIENT_URL || 'https://sugandha.shankar1.com.np',
     CORS_ALLOWED_ORIGINS: process.env.CORS_ALLOWED_ORIGINS || ['http://localhost:3000', 'https://localhost:3000','https://sugandha.shankar1.com.np'],
 
+    // Node environment
+    NODE_ENV: process.env.NODE_ENV || 'development',
+
     // New configurations mongoDB
     MONGO_URI: process.env.MONGO_URI || 'mongodb+srv://kryss:kryss123krishna@kryssna.5azh3wp.mongodb.net/?retryWrites=true&w=majority&appName=kryssna',
   }

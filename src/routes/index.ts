@@ -38,7 +38,7 @@ export const configureRoutes = (app: express.Application) => {
     app.get('/api/v1/auth/csrf-token', csrfProtection, (req: Request, res: Response) => {
         // Set explicit CORS headers for the token endpoint
         res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Origin', config.CORS_ALLOWED_ORIGINS[2]);
+        res.setHeader('Access-Control-Allow-Origin', config.NODE_ENV == "development" ? config.CORS_ALLOWED_ORIGINS[1] : config.CORS_ALLOWED_ORIGINS[2]);
 
         const token = req.csrfToken();
         res.json({ csrfToken: token });

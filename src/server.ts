@@ -24,7 +24,7 @@ const options = {
 // Create HTTPS server
 const httpsServer = https.createServer(options, server);
 
-server.listen(PORT, () => {
+httpsServer.listen(PORT, () => {
   serverLogger.info(`HTTPS Server running on port ${PORT}`);
 });
 

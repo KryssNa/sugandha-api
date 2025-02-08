@@ -101,7 +101,7 @@ export const configureSecurity = (app: express.Application) => {
     app.use(
         rateLimit({
             windowMs: 15 * 60 * 1000, // 15 minutes
-            max: 2550, // limit each IP to 50 requests per windowMs
+            max: 2500, // limit each IP to 2500 requests per windowMs
             message: "Too many request from this ip. Please try again later!"
         })
     );
